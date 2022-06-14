@@ -5,33 +5,74 @@ import com.azure.identity.DeviceCodeCredentialBuilder;
 import com.azure.identity.DeviceCodeInfo;
 import com.microsoft.graph.authentication.TokenCredentialAuthProvider;
 import com.microsoft.graph.models.*;
+import com.microsoft.graph.requests.AttachmentCollectionRequest;
 import com.microsoft.graph.requests.GraphServiceClient;
 import com.microsoft.graph.requests.MessageCollectionPage;
+import lombok.extern.log4j.Log4j2;
 import okhttp3.Request;
+import org.springframework.util.ResourceUtils;
 
-import java.util.Arrays;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.function.Consumer;
 
+@Log4j2
 public class GraphConfig {
-    private static Properties _properties;
-    private static DeviceCodeCredential _deviceCodeCredential;
     private static GraphServiceClient<Request> _userClient;
 
+    public static void initializeGraph() {
+        try {
+            initializeGraphForUserAuth(getProperties(), challenge -> System.out.println(challenge.getMessage()));
+        } catch (Exception e) {
+            log.info("Error initializing Graph for user auth:");
+            log.info(e.getMessage());
+        }
+    }
 
-    public static void initializeGraphForUserAuth(Properties properties, Consumer<DeviceCodeInfo> challenge) throws Exception {
+    public static List<Attachment> listInbox() throws Exception {
+        try {
+            final MessageCollectionPage messages = getInbox();
+            List<Attachment> attachments = new ArrayList<>();
+
+            for (Message message : messages.getCurrentPage()) {
+                AttachmentCollectionRequest request = _userClient.me().messages(message.id).attachments().buildRequest();
+                if (message.hasAttachments) {
+                    attachments.add(Objects.requireNonNull(request.get()).getCurrentPage().get(0));
+                }
+            }
+            return attachments;
+        } catch (Exception e) {
+            log.info("Щось сталося");
+            throw e;
+        }
+    }
+
+    public void sendMail() {
+        try {
+            final User user = getUser();
+            final String email = user.mail == null ? user.userPrincipalName : user.mail;
+            sendMail("Testing Microsoft Graph", "Hello world!", email);
+            log.info("\nMail sent.");
+        } catch (Exception e) {
+            log.info("Error sending mail");
+            log.info(e.getMessage());
+        }
+    }
+
+    private static void initializeGraphForUserAuth(Properties properties, Consumer<DeviceCodeInfo> challenge) throws Exception {
         if (properties == null) {
             throw new Exception("Properties cannot be null");
         }
 
-        _properties = properties;
         final String clientId = properties.getProperty("app.clientId");
         final String authTenantId = properties.getProperty("app.authTenant");
         final List<String> graphUserScopes = Arrays
                 .asList(properties.getProperty("app.graphUserScopes").split(","));
 
-        _deviceCodeCredential = new DeviceCodeCredentialBuilder()
+        DeviceCodeCredential _deviceCodeCredential = new DeviceCodeCredentialBuilder()
                 .clientId(clientId)
                 .tenantId(authTenantId)
                 .challengeConsumer(challenge)
@@ -45,7 +86,7 @@ public class GraphConfig {
                 .buildClient();
     }
 
-    public static MessageCollectionPage getInbox() throws Exception {
+    private static MessageCollectionPage getInbox() throws Exception {
         if (_userClient == null) {
             throw new Exception("Graph has not been initialized for user auth");
         }
@@ -54,17 +95,25 @@ public class GraphConfig {
                 .mailFolders("inbox")
                 .messages()
                 .buildRequest()
-                .top(25)
                 .orderBy("receivedDateTime DESC")
                 .get();
     }
 
-    public static GraphServiceClient<Request> getUserClient() {
-        return _userClient;
+    private static Properties getProperties() throws IOException {
+        final Properties properties = new Properties();
+
+        try {
+            File file = ResourceUtils.getFile("classpath:oAuth.properties");
+            properties.load(Files.newInputStream(file.toPath()));
+
+            return properties;
+        } catch (IOException e) {
+            log.info("Unable to read OAuth configuration.");
+            throw e;
+        }
     }
 
-
-    public User getUser() throws Exception {
+    private User getUser() throws Exception {
         if (_userClient == null) {
             throw new Exception("Graph has not been initialized for user auth.");
         }
@@ -75,7 +124,7 @@ public class GraphConfig {
                 .get();
     }
 
-    public void sendMail(String subject, String body, String recipient) throws Exception {
+    private void sendMail(String subject, String body, String recipient) throws Exception {
         // Ensure client isn't null
         if (_userClient == null) {
             throw new Exception("Graph has not been initialized for user auth");

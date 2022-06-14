@@ -6,14 +6,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.util.Date;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "email")
-@Entity
-@Builder
+@Entity(name = "email")
 public class EmailEntity {
 
     @Id
@@ -26,6 +26,6 @@ public class EmailEntity {
     public boolean hasSendingError;
     public Date sendingTime;
     @Column(name = "receiving_time")
-    public Date receivingTime;
+    public LocalDate receivingTime;
 
 }

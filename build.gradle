@@ -10,15 +10,19 @@ sourceCompatibility = "1.9"
 
 repositories {
     mavenCentral()
+    maven {
+        url "https://repo.e-iceblue.com/nexus/content/groups/public/"
+    }
 }
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation group: 'com.itextpdf', name: 'itextpdf', version: '5.5.12'
     implementation 'com.google.guava:guava:31.1-jre'
     implementation 'com.azure:azure-identity:1.5.2'
     implementation 'com.microsoft.graph:microsoft-graph:5.26.0'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation group: 'e-iceblue', name: 'spire.pdf', version: '5.5.0'
+    implementation group: 'com.opencsv', name: 'opencsv', version: '3.7'
 
     runtimeOnly 'com.h2database:h2'
     compileOnly 'org.projectlombok:lombok'
