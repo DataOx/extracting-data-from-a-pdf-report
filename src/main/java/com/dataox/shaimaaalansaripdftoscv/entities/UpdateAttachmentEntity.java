@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @Builder
@@ -31,11 +32,11 @@ public class UpdateAttachmentEntity {
     public String presentActivity;
     public String formation;
     public Date date;
-    @ManyToOne(cascade = {CascadeType.ALL})
+    @OneToMany(cascade = {CascadeType.ALL})
     @JoinColumn(name = "bit_hydraulics_id")
-    public BITHydraulicsEntity BITHydraulics;
-    @ManyToOne(cascade = {CascadeType.ALL})
+    public List<BITHydraulicsEntity> BITHydraulics;
+    @OneToMany(cascade = {CascadeType.ALL})
     @JoinColumn(name = "non_productive_time_id")
-    public NonProductiveTimeEntity nonProductiveTime;
+    public List<NonProductiveTimeEntity> nonProductiveTime;
 
 }

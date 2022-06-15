@@ -13,9 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
+import java.util.*;
 
 @Log4j2
 @Service
@@ -39,7 +37,6 @@ public class ParsingService {
 
     private UpdateAttachmentEntity createUpdateAttachment(PdfTable table) throws ParseException {
         String firstRowInPDF = table.getText(0, 0);
-
         return UpdateAttachmentEntity.builder()
                 .area(firstRowInPDF.substring(firstRowInPDF.indexOf("AREA:") + 5, firstRowInPDF.indexOf("GC")))
                 .team(firstRowInPDF.substring(firstRowInPDF.indexOf("TEAM:") + 5))
@@ -65,48 +62,54 @@ public class ParsingService {
                 .append(table.getText(2, 45)).append("-")
                 .append(table.getText(2, 47)).append("-")
                 .append(table.getText(2, 51));
-
         return formatter.parse(stringBuilderForDateField.toString());
     }
 
-    private NonProductiveTimeEntity parsingAndSaveNonProductiveTimeFromPDF(PdfTable table) {
-        //        StringBuilder stringBuilderForDateField = new StringBuilder();
-//        String text = table.getText(7, 21);
+    private List<NonProductiveTimeEntity> parsingAndSaveNonProductiveTimeFromPDF(PdfTable table) {
+        List<NonProductiveTimeEntity> nonProductiveTimeEntities = new ArrayList<>();
+
+//        StringBuilder stringBuilderForDateField = new StringBuilder();
+//        String text = table.getText(27, 0);
 //        stringBuilderForDateField.append(text).append(" ");
-//        text = table.getText(7, 44);
+//        text = table.getText(28, 0);
 //        stringBuilderForDateField.append(text).append(" ");
 //        stringBuilderForDateField.append("\r\n");
-//        System.out.println("вона: " + stringBuilderForDateField);
+//        System.out.println("строка: " + stringBuilderForDateField);
+//
+//        nonProductiveTimeEntities.add(NonProductiveTimeEntity.builder()
+//                .build());
 
-        return NonProductiveTimeEntity.builder()
-                .build();
+        return nonProductiveTimeEntities;
     }
 
-    private BITHydraulicsEntity parsingAndSaveBITFromPDF(PdfTable table) {
-
-        return BITHydraulicsEntity.builder()
-                .BIT(table.getText(7, 0))
-                .size(table.getText(7, 2))
-                .model(table.getText(7, 9))
-                .jetSize(table.getText(7, 21))
-                .depthIn(table.getText(7, 44))
-                .depthOut(table.getText(7, 49))
-                .serNo(table.getText(7, 83))
-                .manufacturer(table.getText(7, 88))
-                .PSI(table.getText(10, 35))
-                .liner(table.getText(10, 44))
-                .SPM(table.getText(10, 51))
-                .PHHP(table.getText(10, 58))
-                .AVEL(table.getText(10, 92))
-                .I(table.getText(11, 14))
-                .O(table.getText(11, 17))
-                .D(table.getText(11, 19))
-                .L(table.getText(11, 21))
-                .B(table.getText(11, 22))
-                .G(table.getText(11, 26))
-                .Osecond(table.getText(11, 31))
-                .R(table.getText(11, 32))
-                .build();
+    private List<BITHydraulicsEntity> parsingAndSaveBITFromPDF(PdfTable table) {
+        List<BITHydraulicsEntity> bitHydraulicsEntities = new ArrayList<>();
+        for (int row = 7; row <= 8; row++) {
+            bitHydraulicsEntities.add(BITHydraulicsEntity.builder()
+                    .BIT(table.getText(row, 0))
+                    .size(table.getText(row, 2))
+                    .model(table.getText(row, 9))
+                    .jetSize(table.getText(row, 21))
+                    .depthIn(table.getText(row, 44))
+                    .depthOut(table.getText(row, 49))
+                    .serNo(table.getText(row, 83))
+                    .manufacturer(table.getText(row, 88))
+                    .PSI(table.getText(row + 3, 35))
+                    .liner(table.getText(row + 3, 44))
+                    .SPM(table.getText(row + 3, 51))
+                    .PHHP(table.getText(row + 3, 58))
+                    .AVEL(table.getText(row + 3, 92))
+                    .I(table.getText(row + 3, 14))
+                    .O(table.getText(row + 3, 17))
+                    .D(table.getText(row + 3, 19))
+                    .L(table.getText(row + 3, 21))
+                    .B(table.getText(row + 3, 22))
+                    .G(table.getText(row + 3, 26))
+                    .Osecond(table.getText(row + 3, 31))
+                    .R(table.getText(row + 3, 32))
+                    .build());
+        }
+        return bitHydraulicsEntities;
     }
 
 }
