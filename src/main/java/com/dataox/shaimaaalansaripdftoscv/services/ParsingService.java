@@ -9,8 +9,11 @@ import com.spire.pdf.utilities.PdfTable;
 import com.spire.pdf.utilities.PdfTableExtractor;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -67,18 +70,43 @@ public class ParsingService {
 
     private List<NonProductiveTimeEntity> parsingAndSaveNonProductiveTimeFromPDF(PdfTable table) {
         List<NonProductiveTimeEntity> nonProductiveTimeEntities = new ArrayList<>();
+        for (int row = 30; row < 54; row++) {
+            if (table.getText(row, 1).contains("NP")) {
+                StringBuilder operationalDistribution = new StringBuilder(table.getText(row, 6));
 
-//        StringBuilder stringBuilderForDateField = new StringBuilder();
-//        String text = table.getText(27, 0);
-//        stringBuilderForDateField.append(text).append(" ");
-//        text = table.getText(28, 0);
-//        stringBuilderForDateField.append(text).append(" ");
-//        stringBuilderForDateField.append("\r\n");
-//        System.out.println("строка: " + stringBuilderForDateField);
-//
-//        nonProductiveTimeEntities.add(NonProductiveTimeEntity.builder()
-//                .build());
+                for (int rowNP = row + 1; rowNP < 54; rowNP++) {
+                    Serializable statement = table.getText(rowNP, 0).equals("") ?
+                            operationalDistribution.append(" ").append(table.getText(rowNP, 6)) :
+                            (rowNP = 55);
+                }
+                if (row == 53 && table.getText(30, 60).equals("")) {
+                    for (int rowNP = 30; rowNP < 54; rowNP++) {
+                        Serializable statement = table.getText(rowNP, 60).equals("") ?
+                                operationalDistribution.append(" ").append(table.getText(rowNP, 70)) :
+                                (rowNP = 55);
+                    }
+                }
 
+                nonProductiveTimeEntities.add(NonProductiveTimeEntity.builder()
+                        .hours(Double.valueOf(table.getText(row, 0)))
+                        .operationalDistribution(operationalDistribution.toString())
+                        .build());
+            }
+            if (table.getText(row, 63).contains("NP")) {
+                StringBuilder operationalDistribution = new StringBuilder(table.getText(row, 70));
+
+                for (int rowNP = row + 1; rowNP < 55; rowNP++) {
+                    Serializable statement = table.getText(rowNP, 60).equals("") ?
+                            operationalDistribution.append(" ").append(table.getText(rowNP, 70)) :
+                            (rowNP = 55);
+                }
+
+                nonProductiveTimeEntities.add(NonProductiveTimeEntity.builder()
+                        .hours(Double.valueOf(table.getText(row, 60)))
+                        .operationalDistribution(operationalDistribution.toString())
+                        .build());
+            }
+        }
         return nonProductiveTimeEntities;
     }
 
@@ -96,8 +124,9 @@ public class ParsingService {
                     .manufacturer(table.getText(row, 88))
                     .PSI(table.getText(row + 3, 35))
                     .liner(table.getText(row + 3, 44))
-                    .SPM(table.getText(row + 3, 51))
-                    .PHHP(table.getText(row + 3, 58))
+                    .SPM(table.getText(row + 3, 48))
+                    .GPM(table.getText(row + 3, 58))
+                    .PHHP(table.getText(row + 3, 64))
                     .AVEL(table.getText(row + 3, 92))
                     .I(table.getText(row + 3, 14))
                     .O(table.getText(row + 3, 17))

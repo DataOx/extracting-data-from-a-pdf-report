@@ -23,7 +23,6 @@ public class UpdateAttachmentEntity {
     public String wellNo;
     public String tgTarget;
     public String profile;
-    public String dsCompany;
     public String area;
     public String team;
     public String kocTeamLeader;
@@ -33,10 +32,10 @@ public class UpdateAttachmentEntity {
     public String formation;
     public Date date;
     @OneToMany(cascade = {CascadeType.ALL})
-    @JoinColumn(name = "bit_hydraulics_id")
+    @JoinColumn(name = "email_id")
     public List<BITHydraulicsEntity> BITHydraulics;
     @OneToMany(cascade = {CascadeType.ALL})
-    @JoinColumn(name = "non_productive_time_id")
+    @JoinColumn(name = "email_id")
     public List<NonProductiveTimeEntity> nonProductiveTime;
 
 }
