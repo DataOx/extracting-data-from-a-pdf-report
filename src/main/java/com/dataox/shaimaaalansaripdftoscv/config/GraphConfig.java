@@ -5,9 +5,7 @@ import com.azure.identity.DeviceCodeCredentialBuilder;
 import com.azure.identity.DeviceCodeInfo;
 import com.microsoft.graph.authentication.TokenCredentialAuthProvider;
 import com.microsoft.graph.models.*;
-import com.microsoft.graph.requests.AttachmentCollectionRequest;
-import com.microsoft.graph.requests.GraphServiceClient;
-import com.microsoft.graph.requests.MessageCollectionPage;
+import com.microsoft.graph.requests.*;
 import lombok.extern.log4j.Log4j2;
 import okhttp3.Request;
 import org.springframework.util.ResourceUtils;
@@ -32,7 +30,7 @@ public class GraphConfig {
         }
     }
 
-    public static List<Attachment> attachmentsList() throws Exception {
+    public static List<Attachment> getAttachmentsList() throws Exception {
         try {
             final MessageCollectionPage messagesFromInbox = getInboxMessages();
             List<Attachment> attachments = new ArrayList<>();
@@ -51,17 +49,41 @@ public class GraphConfig {
         }
     }
 
-    public void sendMail() {
-        try {
-            final User user = getUser();
-            final String email = user.mail == null ? user.userPrincipalName : user.mail;
-            sendMail("Testing Microsoft Graph", "Hello world!", email);
-            log.info("Mail sent.");
-        } catch (Exception e) {
-            log.info("Error sending mail");
-            log.info(e.getMessage());
+    public static User getRecipientUser() throws Exception {
+        if (_userClient == null) {
+            throw new Exception("Graph has not been initialized for user auth.");
         }
+
+        return _userClient.me()
+                .buildRequest()
+                .select("displayName,mail,userPrincipalName")
+                .get();
     }
+
+    public static void sendMail(String subject, String body, AttachmentCollectionResponse attachment, String recipient) throws Exception {
+        if (_userClient == null) {
+            throw new Exception("Graph has not been initialized for user auth");
+        }
+
+        final Message message = new Message();
+        message.subject = subject;
+        message.body = new ItemBody();
+        message.body.content = body;
+        message.body.contentType = BodyType.TEXT;
+        message.attachments = new AttachmentCollectionPage(attachment, null);
+        message.hasAttachments = true;
+
+        final Recipient toRecipient = new Recipient();
+        toRecipient.emailAddress = new EmailAddress();
+        toRecipient.emailAddress.address = recipient;
+        message.toRecipients = List.of(toRecipient);
+
+        _userClient.me()
+                .sendMail(UserSendMailParameterSet.newBuilder().withMessage(message).build())
+                .buildRequest()
+                .post();
+    }
+
 
     private static void initializeGraphForUserAuth(Properties properties, Consumer<DeviceCodeInfo> challenge) throws Exception {
         if (properties == null) {
@@ -113,44 +135,6 @@ public class GraphConfig {
             log.info("Unable to read OAuth configuration.");
             throw e;
         }
-    }
-
-    private User getUser() throws Exception {
-        if (_userClient == null) {
-            throw new Exception("Graph has not been initialized for user auth.");
-        }
-
-        return _userClient.me()
-                .buildRequest()
-                .select("displayName,mail,userPrincipalName")
-                .get();
-    }
-
-    private void sendMail(String subject, String body, String recipient) throws Exception {
-        // Ensure client isn't null
-        if (_userClient == null) {
-            throw new Exception("Graph has not been initialized for user auth");
-        }
-
-        // Create a new message
-        final Message message = new Message();
-        message.subject = subject;
-        message.body = new ItemBody();
-        message.body.content = body;
-        message.body.contentType = BodyType.TEXT;
-
-        final Recipient toRecipient = new Recipient();
-        toRecipient.emailAddress = new EmailAddress();
-        toRecipient.emailAddress.address = recipient;
-        message.toRecipients = List.of(toRecipient);
-
-        // Send the message
-        _userClient.me()
-                .sendMail(UserSendMailParameterSet.newBuilder()
-                        .withMessage(message)
-                        .build())
-                .buildRequest()
-                .post();
     }
 
 }
