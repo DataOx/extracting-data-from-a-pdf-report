@@ -27,10 +27,14 @@ public class ParsingService {
     public void parsingToUpdateAttachmentFromPDF(byte[] filePDF) throws ParseException {
         PdfDocument attachmentInPDF = new PdfDocument(filePDF);
         PdfTableExtractor extractor = new PdfTableExtractor(attachmentInPDF);
-
         for (PdfTable table : extractor.extractTable(0)) {
             saveUpdateAttachmentToDB(createUpdateAttachment(table));
         }
+    }
+
+    private void saveUpdateAttachmentToDB(UpdateAttachmentEntity attachment) {
+        updateAttachmentRepository.save(attachment);
+        log.info("Attachment with id " + attachment.id + " saved in DB.");
     }
 
     private UpdateAttachmentEntity createUpdateAttachment(PdfTable table) throws ParseException {
@@ -74,7 +78,8 @@ public class ParsingService {
 //        stringBuilderForDateField.append("\r\n");
 //        System.out.println("вона: " + stringBuilderForDateField);
 
-        return NonProductiveTimeEntity.builder().build();
+        return NonProductiveTimeEntity.builder()
+                .build();
     }
 
     private BITHydraulicsEntity parsingAndSaveBITFromPDF(PdfTable table) {
@@ -102,10 +107,6 @@ public class ParsingService {
                 .Osecond(table.getText(11, 31))
                 .R(table.getText(11, 32))
                 .build();
-    }
-
-    private void saveUpdateAttachmentToDB(UpdateAttachmentEntity attachment) {
-        updateAttachmentRepository.save(attachment);
     }
 
 }

@@ -23,29 +23,30 @@ import java.util.function.Consumer;
 public class GraphConfig {
     private static GraphServiceClient<Request> _userClient;
 
-    public static void initializeGraph() {
+    public static void initializeGraph() throws Exception {
         try {
             initializeGraphForUserAuth(getProperties(), challenge -> System.out.println(challenge.getMessage()));
         } catch (Exception e) {
             log.info("Error initializing Graph for user auth:");
-            log.info(e.getMessage());
+            throw e;
         }
     }
 
-    public static List<Attachment> listInbox() throws Exception {
+    public static List<Attachment> attachmentsList() throws Exception {
         try {
-            final MessageCollectionPage messages = getInbox();
+            final MessageCollectionPage messagesFromInbox = getInboxMessages();
             List<Attachment> attachments = new ArrayList<>();
-
-            for (Message message : messages.getCurrentPage()) {
+            for (Message message : messagesFromInbox.getCurrentPage()) {
                 AttachmentCollectionRequest request = _userClient.me().messages(message.id).attachments().buildRequest();
                 if (message.hasAttachments) {
-                    attachments.add(Objects.requireNonNull(request.get()).getCurrentPage().get(0));
+                    Attachment attachment = Objects.requireNonNull(request.get()).getCurrentPage().get(0);
+                    attachments.add(attachment);
+                    log.info("Receive email with attachment '" + attachment.name);
                 }
             }
             return attachments;
         } catch (Exception e) {
-            log.info("Щось сталося");
+            log.info("Can't receive emails.");
             throw e;
         }
     }
@@ -55,7 +56,7 @@ public class GraphConfig {
             final User user = getUser();
             final String email = user.mail == null ? user.userPrincipalName : user.mail;
             sendMail("Testing Microsoft Graph", "Hello world!", email);
-            log.info("\nMail sent.");
+            log.info("Mail sent.");
         } catch (Exception e) {
             log.info("Error sending mail");
             log.info(e.getMessage());
@@ -86,7 +87,7 @@ public class GraphConfig {
                 .buildClient();
     }
 
-    private static MessageCollectionPage getInbox() throws Exception {
+    private static MessageCollectionPage getInboxMessages() throws Exception {
         if (_userClient == null) {
             throw new Exception("Graph has not been initialized for user auth");
         }
@@ -95,6 +96,7 @@ public class GraphConfig {
                 .mailFolders("inbox")
                 .messages()
                 .buildRequest()
+                .filter("receivedDateTime ge 2022-06-10T00:00:01Z")
                 .orderBy("receivedDateTime DESC")
                 .get();
     }

@@ -5,7 +5,7 @@ import com.dataox.shaimaaalansaripdftoscv.entities.EmailEntity;
 import com.dataox.shaimaaalansaripdftoscv.repositories.EmailRepository;
 import com.microsoft.graph.models.Attachment;
 import com.microsoft.graph.models.FileAttachment;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -20,7 +20,7 @@ import java.util.Objects;
 
 @Log4j2
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class ReceivingService {
     private final EmailRepository emailRepository;
     private final ParsingService parsingService;
@@ -35,38 +35,42 @@ public class ReceivingService {
     public void receiveAttachment() {
         try {
             GraphConfig.initializeGraph();
-
-            for (Attachment attachment : GraphConfig.listInbox()) {
+            for (Attachment attachment : GraphConfig.attachmentsList()) {
                 if (checkIfAttachmentIsNecessary(attachment)) {
-
                     EmailEntity emailEntity = EmailEntity.builder()
                             .attachmentName(attachment.name)
                             .receivingTime(LocalDate.from(attachment.lastModifiedDateTime.toLocalDateTime()))
                             .sendingTime(null)
                             .build();
-
                     emailRepository.save(emailEntity);
+                    log.info("Save received email.");
                     parsingService.parsingToUpdateAttachmentFromPDF(((FileAttachment) attachment).contentBytes);
                 }
             }
         } catch (Exception e) {
-            log.info("Щось не так");
+            log.info("Can't save received email.");
         }
     }
 
     private boolean checkIfAttachmentIsNecessary(Attachment attachment) throws SQLException {
-
         Connection dbConnection = DriverManager.getConnection(DBURL, userName, password);
-        List<String> names = new ArrayList<>();
-        try (Statement s = dbConnection.createStatement()) {
-            try (ResultSet rs = s.executeQuery("select attachment_name from email order by id")) {
-                while (rs.next()) {
-                    names.add(rs.getString(1));
+        List<String> attachmentsNamesInDB = new ArrayList<>();
+
+        try (Statement statement = dbConnection.createStatement()) {
+            try (ResultSet resultSet = statement.executeQuery("select attachment_name from email order by id")) {
+                while (resultSet.next()) {
+                    attachmentsNamesInDB.add(resultSet.getString(1));
                 }
             }
         }
 
-        return Objects.equals(attachment.contentType, "application/pdf") && !names.contains(attachment.name);
+        String attachmentName = attachment.name;
+        if (attachmentName.contains(") - ")) {
+            return Objects.equals(attachment.contentType, "application/pdf") &&
+                    !attachmentsNamesInDB.contains(attachmentName.substring(0, attachmentName.indexOf(") - ")));
+        } else {
+            return Objects.equals(attachment.contentType, "application/pdf");
+        }
     }
 
 }
