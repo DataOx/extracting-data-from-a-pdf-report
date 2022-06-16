@@ -1,6 +1,8 @@
 package com.dataox.shaimaaalansaripdftoscv.services;
 
 import com.dataox.shaimaaalansaripdftoscv.config.GraphConfig;
+import com.dataox.shaimaaalansaripdftoscv.entities.UpdateAttachmentEntity;
+import com.dataox.shaimaaalansaripdftoscv.repositories.EmailRepository;
 import com.microsoft.graph.models.FileAttachment;
 import com.microsoft.graph.models.User;
 import com.microsoft.graph.requests.AttachmentCollectionResponse;
@@ -19,24 +21,23 @@ import java.util.List;
 @AllArgsConstructor
 public class SendingService {
 
-    public static void sendEmail() throws Exception {
+    public void sendEmail(String updateAttachmentName) throws Exception {
         GraphConfig.initializeGraph();
         try {
             final User senderUser = GraphConfig.getRecipientUser();
             final String recipientEmailAddress = senderUser.mail == null ? senderUser.userPrincipalName : senderUser.mail;
             AttachmentCollectionResponse attachment = new AttachmentCollectionResponse();
-            attachment.value = List.of(getFileAttachment());
+            attachment.value = List.of(getFileAttachment(updateAttachmentName));
             GraphConfig.sendMail("Update Report", createEmail(), attachment, recipientEmailAddress);
             log.info("Mail with CSV sent.");
         } catch (Exception e) {
             log.info("Error sending mail");
             log.info(e.getMessage());
         }
-
     }
 
-    private static FileAttachment getFileAttachment() throws Exception {
-        File pdfFile = new File("NPTReport.csv");
+    private static FileAttachment getFileAttachment(String updateAttachmentName) throws Exception {
+        File pdfFile = new File("attachmentFiles/NPTReport.csv" + updateAttachmentName + ".csv");
         InputStream fileStream = Files.newInputStream(pdfFile.toPath());
         FileAttachment fileAttachment = new FileAttachment();
         fileAttachment.name = pdfFile.getName();

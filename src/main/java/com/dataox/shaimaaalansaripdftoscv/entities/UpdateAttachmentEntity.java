@@ -20,6 +20,7 @@ public class UpdateAttachmentEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")
     public Long id;
+    public String name;
     public String wellNo;
     public String tgTarget;
     public String profile;
@@ -32,10 +33,10 @@ public class UpdateAttachmentEntity {
     public String formation;
     public Date date;
     @OneToMany(cascade = {CascadeType.ALL})
-    @JoinColumn(name = "email_id")
+    @JoinColumn(name = "update_attachment_id")
     public List<BITHydraulicsEntity> BITHydraulics;
     @OneToMany(cascade = {CascadeType.ALL})
-    @JoinColumn(name = "email_id")
+    @JoinColumn(name = "update_attachment_id")
     public List<NonProductiveTimeEntity> nonProductiveTime;
 
 }

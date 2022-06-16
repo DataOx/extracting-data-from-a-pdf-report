@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @Builder
@@ -20,12 +21,13 @@ public class EmailEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")
     public Long id;
-    @Column(name = "attachment_name")
-    public String attachmentName;
     public boolean isHandled;
     public boolean hasSendingError;
     public Date sendingTime;
     @Column(name = "receiving_time")
     public LocalDate receivingTime;
+    @OneToMany(cascade = {CascadeType.ALL})
+    @JoinColumn(name = "email_id")
+    public List<UpdateAttachmentEntity> updateAttachmentEntities;
 
 }

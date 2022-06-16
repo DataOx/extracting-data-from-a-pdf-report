@@ -4,6 +4,7 @@ import com.dataox.shaimaaalansaripdftoscv.entities.BITHydraulicsEntity;
 import com.dataox.shaimaaalansaripdftoscv.entities.NonProductiveTimeEntity;
 import com.dataox.shaimaaalansaripdftoscv.entities.UpdateAttachmentEntity;
 import com.dataox.shaimaaalansaripdftoscv.repositories.UpdateAttachmentRepository;
+import com.microsoft.graph.models.Attachment;
 import com.spire.pdf.PdfDocument;
 import com.spire.pdf.utilities.PdfTable;
 import com.spire.pdf.utilities.PdfTableExtractor;
@@ -23,12 +24,22 @@ public class ParsingService {
 
     private final UpdateAttachmentRepository updateAttachmentRepository;
 
-    public void parsingToUpdateAttachmentFromPDF(byte[] filePDF) throws ParseException {
+    //    @EventListener(ApplicationReadyEvent.class)
+//    public void parsingToUpdateAttachmentFromPDF() throws ParseException {
+//        PdfDocument attachmentInPDF = new PdfDocument("/home/lusika/Downloads/MG-0555-KOC DDR wc-Report Number  41-(05-13-2022).PDF");
+    public List<UpdateAttachmentEntity> parsingToUpdateAttachmentFromPDF(Attachment fileAttachment, byte[] filePDF) throws ParseException {
+        UpdateAttachmentEntity updateAttachment;
+        List<UpdateAttachmentEntity> updateAttachmentEntities = new ArrayList<>();
         PdfDocument attachmentInPDF = new PdfDocument(filePDF);
         PdfTableExtractor extractor = new PdfTableExtractor(attachmentInPDF);
+
         for (PdfTable table : extractor.extractTable(0)) {
-            saveUpdateAttachmentToDB(createUpdateAttachment(table));
+            updateAttachment = createUpdateAttachment(table);
+            updateAttachment.setName(fileAttachment.name);
+            updateAttachmentEntities.add(updateAttachment);
+            saveUpdateAttachmentToDB(updateAttachment);
         }
+        return updateAttachmentEntities;
     }
 
     private void saveUpdateAttachmentToDB(UpdateAttachmentEntity attachment) {
