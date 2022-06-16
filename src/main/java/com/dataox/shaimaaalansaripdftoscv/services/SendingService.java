@@ -1,8 +1,6 @@
 package com.dataox.shaimaaalansaripdftoscv.services;
 
 import com.dataox.shaimaaalansaripdftoscv.config.GraphConfig;
-import com.dataox.shaimaaalansaripdftoscv.entities.UpdateAttachmentEntity;
-import com.dataox.shaimaaalansaripdftoscv.repositories.EmailRepository;
 import com.microsoft.graph.models.FileAttachment;
 import com.microsoft.graph.models.User;
 import com.microsoft.graph.requests.AttachmentCollectionResponse;
@@ -37,7 +35,7 @@ public class SendingService {
     }
 
     private static FileAttachment getFileAttachment(String updateAttachmentName) throws Exception {
-        File pdfFile = new File("attachmentFiles/NPTReport.csv" + updateAttachmentName + ".csv");
+        File pdfFile = new File("attachmentFiles/NPTReport_" + updateAttachmentName + ".csv");
         InputStream fileStream = Files.newInputStream(pdfFile.toPath());
         FileAttachment fileAttachment = new FileAttachment();
         fileAttachment.name = pdfFile.getName();

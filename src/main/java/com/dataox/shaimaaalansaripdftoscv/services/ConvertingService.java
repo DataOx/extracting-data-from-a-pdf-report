@@ -7,14 +7,17 @@ import com.dataox.shaimaaalansaripdftoscv.entities.UpdateAttachmentEntity;
 import com.dataox.shaimaaalansaripdftoscv.repositories.EmailRepository;
 import com.opencsv.CSVWriter;
 import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.io.FileWriter;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+@Log4j2
 @Service
 @AllArgsConstructor
 public class ConvertingService {
@@ -27,12 +30,14 @@ public class ConvertingService {
         for (EmailEntity email : emailRepository.findAllByIsHandledIsFalse()) {
             for (UpdateAttachmentEntity updateAttachment : email.updateAttachmentEntities) {
                 List<String[]> csvData = convertEntityToCSV(updateAttachment);
-                try (CSVWriter writer = new CSVWriter(new FileWriter("attachmentFiles/NPTReport.csv" + updateAttachment.name + ".csv"))) {
+                try (CSVWriter writer = new CSVWriter(new FileWriter("attachmentFiles/NPTReport_" + updateAttachment.name + ".csv"))) {
                     writer.writeAll(csvData);
                 }
                 sendingService.sendEmail(updateAttachment.name);
                 email.setHandled(true);
+                email.setSendingTime(LocalDate.now());
                 emailRepository.save(email);
+                log.info("Email with " + updateAttachment.name + " has been sent.");
             }
         }
     }

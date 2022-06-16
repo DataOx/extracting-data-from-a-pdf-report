@@ -9,8 +9,6 @@ import com.microsoft.graph.models.FileAttachment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.sql.*;
@@ -39,23 +37,23 @@ public class ReceivingService {
             GraphConfig.initializeGraph();
             for (Attachment attachment : GraphConfig.getAttachmentsList()) {
                 if (checkIfAttachmentIsNecessary(attachment)) {
+                    EmailEntity email;
                     List<UpdateAttachmentEntity> updateAttachmentEntities =
                             parsingService.parsingToUpdateAttachmentFromPDF(attachment, ((FileAttachment) attachment).contentBytes);
                     if (checkIfHandledEmailsNotExistInBD()) {
-                        EmailEntity emailEntity = EmailEntity.builder()
+                        email = EmailEntity.builder()
                                 .receivingTime(LocalDate.from(attachment.lastModifiedDateTime.toLocalDateTime()))
+//                                .updateAttachmentEntities(new ArrayList<>())
                                 .sendingTime(null)
-                                .updateAttachmentEntities(updateAttachmentEntities)
                                 .build();
-                        emailRepository.save(emailEntity);
-                        log.info("Create new email in BD.");
-                    } else {
-                        EmailEntity email = emailRepository.findFirstByIsHandledIsFalse();
-                        updateAttachmentEntities.addAll(email.getUpdateAttachmentEntities());
-                        email.setUpdateAttachmentEntities(updateAttachmentEntities);
                         emailRepository.save(email);
-                        log.info("Update email in BD with new attachments.");
+                        log.info("Create new email in BD.");
                     }
+                    email = emailRepository.findFirstByIsHandledIsFalse();
+                    updateAttachmentEntities.addAll(email.getUpdateAttachmentEntities());
+                    email.setUpdateAttachmentEntities(updateAttachmentEntities);
+                    emailRepository.save(email);
+                    log.info("Update email in BD with new attachments.");
                 }
             }
         } catch (Exception e) {
@@ -68,7 +66,7 @@ public class ReceivingService {
         List<String> attachmentsNamesInDB = new ArrayList<>();
 
         try (Statement statement = dbConnection.createStatement()) {
-            try (ResultSet resultSet = statement.executeQuery("select attachment_name from email order by id")) {
+            try (ResultSet resultSet = statement.executeQuery("select name from update_attachment order by id")) {
                 while (resultSet.next()) {
                     attachmentsNamesInDB.add(resultSet.getString(1));
                 }
@@ -80,7 +78,7 @@ public class ReceivingService {
             return Objects.equals(attachment.contentType, "application/pdf") &&
                     !attachmentsNamesInDB.contains(attachmentName.substring(0, attachmentName.indexOf(") - ")));
         } else {
-            return Objects.equals(attachment.contentType, "application/pdf");
+            return Objects.equals(attachment.contentType, "application/pdf") && !attachmentsNamesInDB.contains(attachmentName);
         }
     }
 

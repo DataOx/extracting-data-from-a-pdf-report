@@ -23,7 +23,7 @@ public class EmailEntity {
     public Long id;
     public boolean isHandled;
     public boolean hasSendingError;
-    public Date sendingTime;
+    public LocalDate sendingTime;
     @Column(name = "receiving_time")
     public LocalDate receivingTime;
     @OneToMany(cascade = {CascadeType.ALL})
