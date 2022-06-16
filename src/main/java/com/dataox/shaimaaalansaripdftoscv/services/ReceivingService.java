@@ -9,6 +9,7 @@ import com.microsoft.graph.models.FileAttachment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.sql.*;
@@ -30,11 +31,9 @@ public class ReceivingService {
     @Value("${spring.datasource.password}")
     private String password;
 
-    //    @Scheduled(fixedDelay = 1000)
-//    @EventListener(ApplicationReadyEvent.class)
+    @Scheduled(fixedRate = 1000)
     public void receiveAttachment() {
         try {
-            GraphConfig.initializeGraph();
             for (Attachment attachment : GraphConfig.getAttachmentsList()) {
                 if (checkIfAttachmentIsNecessary(attachment)) {
                     EmailEntity email;
@@ -43,7 +42,6 @@ public class ReceivingService {
                     if (checkIfHandledEmailsNotExistInBD()) {
                         email = EmailEntity.builder()
                                 .receivingTime(LocalDate.from(attachment.lastModifiedDateTime.toLocalDateTime()))
-//                                .updateAttachmentEntities(new ArrayList<>())
                                 .sendingTime(null)
                                 .build();
                         emailRepository.save(email);
@@ -76,7 +74,8 @@ public class ReceivingService {
         String attachmentName = attachment.name;
         if (attachmentName.contains(") - ")) {
             return Objects.equals(attachment.contentType, "application/pdf") &&
-                    !attachmentsNamesInDB.contains(attachmentName.substring(0, attachmentName.indexOf(") - ")));
+                    !attachmentsNamesInDB.contains(attachmentName.substring(0, attachmentName.indexOf(") - "))) &&
+                    !attachmentsNamesInDB.contains(attachmentName);
         } else {
             return Objects.equals(attachment.contentType, "application/pdf") && !attachmentsNamesInDB.contains(attachmentName);
         }

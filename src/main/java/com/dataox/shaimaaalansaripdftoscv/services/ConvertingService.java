@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.FileWriter;
@@ -25,7 +26,7 @@ public class ConvertingService {
     private final EmailRepository emailRepository;
     private final SendingService sendingService;
 
-    @EventListener(ApplicationReadyEvent.class)
+    @Scheduled(fixedDelay = 1000)
     public void createCSVFile() throws Exception {
         for (EmailEntity email : emailRepository.findAllByIsHandledIsFalse()) {
             for (UpdateAttachmentEntity updateAttachment : email.updateAttachmentEntities) {

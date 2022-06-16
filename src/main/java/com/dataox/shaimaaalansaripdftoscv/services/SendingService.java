@@ -19,8 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 public class SendingService {
 
-    public void sendEmail(String updateAttachmentName) throws Exception {
-        GraphConfig.initializeGraph();
+    public void sendEmail(String updateAttachmentName) {
         try {
             final User senderUser = GraphConfig.getRecipientUser();
             final String recipientEmailAddress = senderUser.mail == null ? senderUser.userPrincipalName : senderUser.mail;

@@ -1,15 +1,17 @@
 package com.dataox.shaimaaalansaripdftoscv;
 
-import lombok.AllArgsConstructor;
+import com.dataox.shaimaaalansaripdftoscv.config.GraphConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
-@AllArgsConstructor
+@EnableScheduling
 @SpringBootApplication
 public class ShaimaaAlAnsariPdfToScvApplication {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         SpringApplication.run(ShaimaaAlAnsariPdfToScvApplication.class, args);
+        GraphConfig.initializeGraph();
     }
 
 }
