@@ -8,8 +8,6 @@ import com.dataox.shaimaaalansaripdftoscv.repositories.EmailRepository;
 import com.opencsv.CSVWriter;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -21,20 +19,20 @@ import java.util.List;
 @Log4j2
 @Service
 @AllArgsConstructor
-public class ConvertingService {
-
+public class ConvertingAttachmentsToCSVService {
     private final EmailRepository emailRepository;
-    private final SendingService sendingService;
+    private final SendingEmailToClientService sendingEmailToClientService;
 
     @Scheduled(fixedDelay = 1000)
-    public void createCSVFile() throws Exception {
+    public void createCSVFileAndSendWithEmail() throws Exception {
         for (EmailEntity email : emailRepository.findAllByIsHandledIsFalse()) {
             for (UpdateAttachmentEntity updateAttachment : email.updateAttachmentEntities) {
                 List<String[]> csvData = convertEntityToCSV(updateAttachment);
                 try (CSVWriter writer = new CSVWriter(new FileWriter("attachmentFiles/NPTReport_" + updateAttachment.name + ".csv"))) {
                     writer.writeAll(csvData);
                 }
-                sendingService.sendEmail(updateAttachment.name);
+                sendingEmailToClientService.createAndSendEmailToClient(updateAttachment.name);
+
                 email.setHandled(true);
                 email.setSendingTime(LocalDate.now());
                 emailRepository.save(email);
@@ -73,10 +71,10 @@ public class ConvertingService {
         list.add(blank);
         list.add(bitSecondColumnsNames);
         for (BITHydraulicsEntity bitHydraulics : entity.getBITHydraulics()) {
-            bitColumnsValues = new String[]{bitHydraulics.PRM, bitHydraulics.WOB, bitHydraulics.model, bitHydraulics.I,
-                    bitHydraulics.O, bitHydraulics.D, bitHydraulics.L, bitHydraulics.B, bitHydraulics.G, bitHydraulics.O,
-                    bitHydraulics.R, bitHydraulics.PSI, bitHydraulics.liner, bitHydraulics.SPM, bitHydraulics.GPM,
-                    bitHydraulics.PHHP, bitHydraulics.BHHP, bitHydraulics.TORQ, bitHydraulics.AVEL};
+            bitColumnsValues = new String[]{bitHydraulics.PRM, bitHydraulics.WOB, bitHydraulics.I, bitHydraulics.O,
+                    bitHydraulics.D, bitHydraulics.L, bitHydraulics.B, bitHydraulics.G, bitHydraulics.O, bitHydraulics.R,
+                    bitHydraulics.PSI, bitHydraulics.liner, bitHydraulics.SPM, bitHydraulics.GPM, bitHydraulics.PHHP,
+                    bitHydraulics.BHHP, bitHydraulics.TORQ, bitHydraulics.AVEL};
             list.add(bitColumnsValues);
         }
         list.add(blank);

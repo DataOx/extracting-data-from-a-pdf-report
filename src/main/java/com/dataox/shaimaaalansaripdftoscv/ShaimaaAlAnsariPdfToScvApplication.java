@@ -11,7 +11,7 @@ public class ShaimaaAlAnsariPdfToScvApplication {
 
     public static void main(String[] args) throws Exception {
         SpringApplication.run(ShaimaaAlAnsariPdfToScvApplication.class, args);
-        GraphConfig.initializeGraph();
+        GraphConfig.initializeGraphAccount();
     }
 
 }

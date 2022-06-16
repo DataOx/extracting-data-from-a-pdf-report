@@ -4,7 +4,6 @@ import com.dataox.shaimaaalansaripdftoscv.entities.BITHydraulicsEntity;
 import com.dataox.shaimaaalansaripdftoscv.entities.NonProductiveTimeEntity;
 import com.dataox.shaimaaalansaripdftoscv.entities.UpdateAttachmentEntity;
 import com.dataox.shaimaaalansaripdftoscv.repositories.UpdateAttachmentRepository;
-import com.microsoft.graph.models.Attachment;
 import com.spire.pdf.PdfDocument;
 import com.spire.pdf.utilities.PdfTable;
 import com.spire.pdf.utilities.PdfTableExtractor;
@@ -12,7 +11,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
-import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -20,14 +18,10 @@ import java.util.*;
 @Log4j2
 @Service
 @AllArgsConstructor
-public class ParsingService {
-
+public class ParsingAttachmentsPDFToEntityService {
     private final UpdateAttachmentRepository updateAttachmentRepository;
 
-    //    @EventListener(ApplicationReadyEvent.class)
-//    public void parsingToUpdateAttachmentFromPDF() throws ParseException {
-//        PdfDocument attachmentInPDF = new PdfDocument("/home/lusika/Downloads/MG-0555-KOC DDR wc-Report Number  41-(05-13-2022).PDF");
-    public List<UpdateAttachmentEntity> parsingToUpdateAttachmentFromPDF(Attachment fileAttachment, byte[] filePDF) throws ParseException {
+    public List<UpdateAttachmentEntity> parsingToUpdateAttachmentFromPDFAndSave(String fileAttachmentName, byte[] filePDF) throws ParseException {
         UpdateAttachmentEntity updateAttachment;
         List<UpdateAttachmentEntity> updateAttachmentEntities = new ArrayList<>();
         PdfDocument attachmentInPDF = new PdfDocument(filePDF);
@@ -35,12 +29,13 @@ public class ParsingService {
 
         for (PdfTable table : extractor.extractTable(0)) {
             updateAttachment = createUpdateAttachment(table);
-            updateAttachment.setName(fileAttachment.name);
+            updateAttachment.setName(fileAttachmentName);
             updateAttachmentEntities.add(updateAttachment);
             saveUpdateAttachmentToDB(updateAttachment);
         }
         return updateAttachmentEntities;
     }
+
 
     private void saveUpdateAttachmentToDB(UpdateAttachmentEntity attachment) {
         updateAttachmentRepository.save(attachment);
@@ -79,37 +74,38 @@ public class ParsingService {
 
     private List<NonProductiveTimeEntity> parsingAndSaveNonProductiveTimeFromPDF(PdfTable table) {
         List<NonProductiveTimeEntity> nonProductiveTimeEntities = new ArrayList<>();
+
         for (int row = 30; row < 54; row++) {
             if (table.getText(row, 1).contains("NP")) {
                 StringBuilder operationalDistribution = new StringBuilder(table.getText(row, 6));
-
                 for (int rowNP = row + 1; rowNP < 54; rowNP++) {
-                    Serializable statement = table.getText(rowNP, 0).equals("") ?
-                            operationalDistribution.append(" ").append(table.getText(rowNP, 6)) :
-                            (rowNP = 55);
+                    if (!table.getText(rowNP, 0).isEmpty()) {
+                        break;
+                    }
+                    operationalDistribution.append(" ").append(table.getText(rowNP, 6));
                 }
                 if (row == 53 && table.getText(30, 60).equals("")) {
                     for (int rowNP = 30; rowNP < 54; rowNP++) {
-                        Serializable statement = table.getText(rowNP, 60).equals("") ?
-                                operationalDistribution.append(" ").append(table.getText(rowNP, 70)) :
-                                (rowNP = 55);
+                        if (!table.getText(rowNP, 60).equals("")) {
+                            break;
+                        }
+                        operationalDistribution.append(" ").append(table.getText(rowNP, 70));
                     }
                 }
-
                 nonProductiveTimeEntities.add(NonProductiveTimeEntity.builder()
                         .hours(Double.valueOf(table.getText(row, 0)))
                         .operationalDistribution(operationalDistribution.toString())
                         .build());
             }
+
             if (table.getText(row, 63).contains("NP")) {
                 StringBuilder operationalDistribution = new StringBuilder(table.getText(row, 70));
-
-                for (int rowNP = row + 1; rowNP < 55; rowNP++) {
-                    Serializable statement = table.getText(rowNP, 60).equals("") ?
-                            operationalDistribution.append(" ").append(table.getText(rowNP, 70)) :
-                            (rowNP = 55);
+                for (int rowNP = row + 1; rowNP < 54; rowNP++) {
+                    if (!table.getText(rowNP, 60).equals("")) {
+                        break;
+                    }
+                    operationalDistribution.append(" ").append(table.getText(rowNP, 70));
                 }
-
                 nonProductiveTimeEntities.add(NonProductiveTimeEntity.builder()
                         .hours(Double.valueOf(table.getText(row, 60)))
                         .operationalDistribution(operationalDistribution.toString())
@@ -146,6 +142,16 @@ public class ParsingService {
                     .Osecond(table.getText(row + 3, 31))
                     .R(table.getText(row + 3, 32))
                     .build());
+
+//            StringBuilder stringBuilderForDateField = new StringBuilder();
+//            String text = table.getText(row + 3, 48);
+//            stringBuilderForDateField.append(text).append(".");
+//            text = table.getText(row + 3, 58);
+//            stringBuilderForDateField.append(text).append(".");
+//            text = table.getText(row + 3, 64);
+//            stringBuilderForDateField.append(text).append("\r\n");
+//            stringBuilderForDateField.append("\r\n");
+//            System.out.println("строка: " + stringBuilderForDateField);
         }
         return bitHydraulicsEntities;
     }

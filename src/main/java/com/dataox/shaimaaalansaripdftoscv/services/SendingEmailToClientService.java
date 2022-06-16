@@ -17,18 +17,18 @@ import java.util.List;
 @Log4j2
 @Service
 @AllArgsConstructor
-public class SendingService {
+public class SendingEmailToClientService {
 
-    public void sendEmail(String updateAttachmentName) {
+    public void createAndSendEmailToClient(String updateAttachmentName) {
         try {
             final User senderUser = GraphConfig.getRecipientUser();
             final String recipientEmailAddress = senderUser.mail == null ? senderUser.userPrincipalName : senderUser.mail;
             AttachmentCollectionResponse attachment = new AttachmentCollectionResponse();
             attachment.value = List.of(getFileAttachment(updateAttachmentName));
-            GraphConfig.sendMail("Update Report", createEmail(), attachment, recipientEmailAddress);
-            log.info("Mail with CSV sent.");
+            GraphConfig.sendEmail("NP Report", createEmailsBody(), attachment, recipientEmailAddress);
+            log.info("Mail with " + updateAttachmentName + " attachment sent.");
         } catch (Exception e) {
-            log.info("Error sending mail");
+            log.info("Error sending mail: ");
             log.info(e.getMessage());
         }
     }
@@ -36,6 +36,7 @@ public class SendingService {
     private static FileAttachment getFileAttachment(String updateAttachmentName) throws Exception {
         File pdfFile = new File("attachmentFiles/NPTReport_" + updateAttachmentName + ".csv");
         InputStream fileStream = Files.newInputStream(pdfFile.toPath());
+
         FileAttachment fileAttachment = new FileAttachment();
         fileAttachment.name = pdfFile.getName();
         fileAttachment.contentBytes = getByteArray(fileStream);
@@ -61,7 +62,7 @@ public class SendingService {
         return null;
     }
 
-    private static String createEmail() {
+    private static String createEmailsBody() {
         return "";
     }
 
