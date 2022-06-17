@@ -22,21 +22,28 @@ import java.util.List;
 public class ConvertingAttachmentsToCSVService {
     private final EmailRepository emailRepository;
     private final SendingEmailToClientService sendingEmailToClientService;
+    private final SendingErrorsHandlerService sendingErrorsHandlerService;
 
-    @Scheduled(fixedDelay = 1000)
-    public void createCSVFileAndSendWithEmail() throws Exception {
+//    @Scheduled(cron = "0 30 10 * * ?")
+@Scheduled(fixedDelay = 1000)
+    public void createCSVFileAndSendWithEmail() {
         for (EmailEntity email : emailRepository.findAllByIsHandledIsFalse()) {
-            for (UpdateAttachmentEntity updateAttachment : email.updateAttachmentEntities) {
-                List<String[]> csvData = convertEntityToCSV(updateAttachment);
-                try (CSVWriter writer = new CSVWriter(new FileWriter("attachmentFiles/NPTReport_" + updateAttachment.name + ".csv"))) {
-                    writer.writeAll(csvData);
-                }
-                sendingEmailToClientService.createAndSendEmailToClient(updateAttachment.name);
+            try {
+                for (UpdateAttachmentEntity updateAttachment : email.updateAttachmentEntities) {
+                    List<String[]> csvData = convertEntityToCSV(updateAttachment);
+                    try (CSVWriter writer = new CSVWriter(new FileWriter("attachmentFiles/NPTReport_" + updateAttachment.name + ".csv"))) {
+                        writer.writeAll(csvData);
+                    }
+                    sendingEmailToClientService.createAndSendEmailToClient(updateAttachment.name);
 
-                email.setHandled(true);
-                email.setSendingTime(LocalDate.now());
-                emailRepository.save(email);
-                log.info("Email with " + updateAttachment.name + " has been sent.");
+                    email.setHandled(true);
+                    email.setSendingTime(LocalDate.now());
+                    emailRepository.save(email);
+                    log.info("Email with " + updateAttachment.name + " has been sent.");
+                }
+            }
+            catch (Exception e) {
+                sendingErrorsHandlerService.checkThatEmailHasErrorWhileSending(email);
             }
         }
     }
