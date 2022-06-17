@@ -1,6 +1,7 @@
 package com.dataox.shaimaaalansaripdftoscv.services;
 
 import com.dataox.shaimaaalansaripdftoscv.config.GraphConfig;
+import com.microsoft.graph.models.Attachment;
 import com.microsoft.graph.models.FileAttachment;
 import com.microsoft.graph.models.User;
 import com.microsoft.graph.requests.AttachmentCollectionResponse;
@@ -12,6 +13,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 
 @Log4j2
@@ -19,22 +21,27 @@ import java.util.List;
 @AllArgsConstructor
 public class SendingEmailToClientService {
 
-    public void createAndSendEmailToClient(String updateAttachmentName) {
+    public boolean isEmailCreatedAndSendToClient(List<String> attachmentNames) {
         try {
             final User senderUser = GraphConfig.getRecipientUser();
             final String recipientEmailAddress = senderUser.mail == null ? senderUser.userPrincipalName : senderUser.mail;
+            List<Attachment> fileAttachments = new ArrayList<>();
             AttachmentCollectionResponse attachment = new AttachmentCollectionResponse();
-            attachment.value = List.of(getFileAttachment(updateAttachmentName));
+            for (String updateAttachmentName : attachmentNames) {
+                fileAttachments.add(getFileAttachment(updateAttachmentName));
+            }
+            attachment.value = fileAttachments;
             GraphConfig.sendEmail("NP Report", createEmailsBody(), attachment, recipientEmailAddress);
-            log.info("Mail with " + updateAttachmentName + " attachment sent.");
+            return true;
         } catch (Exception e) {
             log.info("Error sending mail: ");
             log.info(e.getMessage());
+            return false;
         }
     }
 
     private static FileAttachment getFileAttachment(String updateAttachmentName) throws Exception {
-        File pdfFile = new File("attachmentFiles/NPTReport_" + updateAttachmentName + ".csv");
+        File pdfFile = new File(updateAttachmentName);
         InputStream fileStream = Files.newInputStream(pdfFile.toPath());
 
         FileAttachment fileAttachment = new FileAttachment();

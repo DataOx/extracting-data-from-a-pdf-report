@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 
 @Data
 @Builder
@@ -18,7 +19,7 @@ public class NonProductiveTimeEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")
     public Long id;
-    public Double hours;
+    public BigDecimal hours;
     public String operationalDistribution;
 
 }

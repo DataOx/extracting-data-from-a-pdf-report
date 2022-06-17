@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.FileWriter;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,51 +25,50 @@ public class ConvertingAttachmentsToCSVService {
     private final SendingEmailToClientService sendingEmailToClientService;
     private final SendingErrorsHandlerService sendingErrorsHandlerService;
 
-//    @Scheduled(cron = "0 30 10 * * ?")
-@Scheduled(fixedDelay = 1000)
+    @Scheduled(cron = "0 0 13 * * ?")
+    @Scheduled(cron = "0 30 7 * * ?")
     public void createCSVFileAndSendWithEmail() {
+        List<String> attachmentNames = new ArrayList<>();
         for (EmailEntity email : emailRepository.findAllByIsHandledIsFalse()) {
             try {
                 for (UpdateAttachmentEntity updateAttachment : email.updateAttachmentEntities) {
                     List<String[]> csvData = convertEntityToCSV(updateAttachment);
-                    try (CSVWriter writer = new CSVWriter(new FileWriter("attachmentFiles/NPTReport_" + updateAttachment.name + ".csv"))) {
+                    String attachmentName = "attachmentFiles/NPTReport_" + updateAttachment.name.substring(0, updateAttachment.name.length() - 4) + ".csv";
+                    try (CSVWriter writer = new CSVWriter(new FileWriter(attachmentName))) {
                         writer.writeAll(csvData);
                     }
-                    sendingEmailToClientService.createAndSendEmailToClient(updateAttachment.name);
-
+                    attachmentNames.add(attachmentName);
+                }
+                if (sendingEmailToClientService.isEmailCreatedAndSendToClient(attachmentNames)) {
                     email.setHandled(true);
                     email.setSendingTime(LocalDate.now());
                     emailRepository.save(email);
-                    log.info("Email with " + updateAttachment.name + " has been sent.");
+                    log.info("Email with has been sent.");
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 sendingErrorsHandlerService.checkThatEmailHasErrorWhileSending(email);
             }
         }
     }
 
     List<String[]> convertEntityToCSV(UpdateAttachmentEntity entity) {
-        String[] bitColumnsValues;
-        String[] NPTColumnsValues;
         String[] blank = {" "};
-        String[] header = {" ", " ", " ", "NP Report"};
-        String[] columnsNames = {"WELL NO", "TD TARGET", "PROFILE", " "};
-        String[] columnValues = {entity.wellNo, entity.tgTarget, entity.profile, " "};
-        String[] bitColumnsNames = {"BIT NO", "SIZE", "MODEL", "JET SIZE", "DEPTH IN", "DEPTH OUT", "FTG", "HOURS",
-                "FPH", "SER NO", "MANUFACTURER"};
-        String[] bitSecondColumnsNames = {"RPM", "WOB", "Model", "I", "O", "D", "L", "B", "G", "O", "R", "PSI", "LINER",
-                "SPM", "GPM", "P.HHP", "B.HHP", "TORQ", "N.VEL", "A.VEL(DC/HW/DP)"};
-        String[] NPTColumnsNames = {"HOURS", "DESCRIPTION"};
-
         List<String[]> list = new ArrayList<>();
-        list.add(header);
+
+        list.add(new String[]{" ", " ", " ", "NP Report"});
         list.add(blank);
-        list.add(columnsNames);
-        list.add(columnValues);
+        list.add(new String[]{"Date: " + entity.date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + ", " + entity.date.getDayOfWeek()});
+        list.add(blank);
+        list.add(new String[]{"WELL NO", "TD TARGET", "PROFILE"});
+        list.add(new String[]{entity.wellNo, entity.tgTarget, entity.profile});
+        list.add(blank);
+        list.add(new String[]{"AREA", "TEAM", "KOC TEAM LEADER", "RIG"});
+        list.add(new String[]{entity.area, entity.team, entity.kocTeamLeader, entity.RIG});
         list.add(blank);
         list.add(new String[]{"Bit Hydraulics"});
-        list.add(bitColumnsNames);
+        list.add(new String[]{"BIT NO", "SIZE", "MODEL", "JET SIZE", "DEPTH IN", "DEPTH OUT", "FTG", "HOURS", "FPH",
+                "SER NO", "MANUFACTURER"});
+        String[] bitColumnsValues;
         for (BITHydraulicsEntity bitHydraulics : entity.getBITHydraulics()) {
             bitColumnsValues = new String[]{bitHydraulics.BIT, bitHydraulics.size, bitHydraulics.model,
                     bitHydraulics.jetSize, bitHydraulics.depthIn, bitHydraulics.depthOut, bitHydraulics.FTG,
@@ -76,12 +76,13 @@ public class ConvertingAttachmentsToCSVService {
             list.add(bitColumnsValues);
         }
         list.add(blank);
-        list.add(bitSecondColumnsNames);
+        list.add(new String[]{"RPM", "WOB", "I", "O", "D", "L", "B", "G", "O", "R", "PSI", "LINER", "SPM", "GPM",
+                "P.HHP", "B.HHP", "TORQ", "N.VEL", "A.VEL(DC/HW/DP)"});
         for (BITHydraulicsEntity bitHydraulics : entity.getBITHydraulics()) {
             bitColumnsValues = new String[]{bitHydraulics.PRM, bitHydraulics.WOB, bitHydraulics.I, bitHydraulics.O,
                     bitHydraulics.D, bitHydraulics.L, bitHydraulics.B, bitHydraulics.G, bitHydraulics.O, bitHydraulics.R,
                     bitHydraulics.PSI, bitHydraulics.liner, bitHydraulics.SPM, bitHydraulics.GPM, bitHydraulics.PHHP,
-                    bitHydraulics.BHHP, bitHydraulics.TORQ, bitHydraulics.AVEL};
+                    bitHydraulics.BHHP, bitHydraulics.TORQ, bitHydraulics.NVEL, bitHydraulics.AVEL};
             list.add(bitColumnsValues);
         }
         list.add(blank);
@@ -95,7 +96,8 @@ public class ConvertingAttachmentsToCSVService {
         list.add(new String[]{entity.formation});
         list.add(blank);
         list.add(new String[]{"Non-Productive Time (NPT)"});
-        list.add(NPTColumnsNames);
+        list.add(new String[]{"HOURS", "DESCRIPTION"});
+        String[] NPTColumnsValues;
         for (NonProductiveTimeEntity nonProductiveTime : entity.getNonProductiveTime()) {
             NPTColumnsValues = new String[]{String.valueOf(nonProductiveTime.hours), nonProductiveTime.operationalDistribution};
             list.add(NPTColumnsValues);

@@ -28,7 +28,7 @@ public class ReceivingEmailsWithAttachmentsService {
     private final EmailRepository emailRepository;
     private final UpdateAttachmentRepository updateAttachmentRepository;
 
-    @Scheduled(fixedRate = 10000)
+    @Scheduled(fixedRate = 100000)
     public void receiveAttachmentsAndSaveInDB() {
         try {
             for (Attachment attachment : GraphConfig.getAttachmentsList()) {

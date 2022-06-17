@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class UpdateAttachmentEntity {
     public String drillingBHA;
     public String presentActivity;
     public String formation;
-    public Date date;
+    public LocalDate date;
     @OneToMany(cascade = {CascadeType.ALL})
     @JoinColumn(name = "update_attachment_id")
     public List<BITHydraulicsEntity> BITHydraulics;

@@ -11,9 +11,11 @@ import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 @Log4j2
 @Service
@@ -21,7 +23,7 @@ import java.util.*;
 public class ParsingAttachmentsPDFToEntityService {
     private final UpdateAttachmentRepository updateAttachmentRepository;
 
-    public List<UpdateAttachmentEntity> parsingToUpdateAttachmentFromPDFAndSave(String fileAttachmentName, byte[] filePDF) throws ParseException {
+    public List<UpdateAttachmentEntity> parsingToUpdateAttachmentFromPDFAndSave(String fileAttachmentName, byte[] filePDF) {
         UpdateAttachmentEntity updateAttachment;
         List<UpdateAttachmentEntity> updateAttachmentEntities = new ArrayList<>();
         PdfDocument attachmentInPDF = new PdfDocument(filePDF);
@@ -42,7 +44,7 @@ public class ParsingAttachmentsPDFToEntityService {
         log.info("Attachment with id " + attachment.id + " saved in DB.");
     }
 
-    private UpdateAttachmentEntity createUpdateAttachment(PdfTable table) throws ParseException {
+    private UpdateAttachmentEntity createUpdateAttachment(PdfTable table) {
         String firstRowInPDF = table.getText(0, 0);
         return UpdateAttachmentEntity.builder()
                 .area(firstRowInPDF.substring(firstRowInPDF.indexOf("AREA:") + 5, firstRowInPDF.indexOf("GC")))
@@ -61,15 +63,12 @@ public class ParsingAttachmentsPDFToEntityService {
                 .build();
     }
 
-    private Date parsingDateFromPDF(PdfTable table) throws ParseException {
-        StringBuilder stringBuilderForDateField = new StringBuilder();
-        SimpleDateFormat formatter = new SimpleDateFormat("dd-M-yyyy", Locale.ENGLISH);
-        formatter.setTimeZone(TimeZone.getTimeZone("America/New_York"));
-        stringBuilderForDateField
-                .append(table.getText(2, 45)).append("-")
-                .append(table.getText(2, 47)).append("-")
-                .append(table.getText(2, 51));
-        return formatter.parse(stringBuilderForDateField.toString());
+    private LocalDate parsingDateFromPDF(PdfTable table) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-M-yyyy");
+        String date = table.getText(2, 45) + "-" +
+                table.getText(2, 47) + "-" +
+                table.getText(2, 51);
+        return LocalDate.parse(date, formatter);
     }
 
     private List<NonProductiveTimeEntity> parsingAndSaveNonProductiveTimeFromPDF(PdfTable table) {
@@ -93,7 +92,7 @@ public class ParsingAttachmentsPDFToEntityService {
                     }
                 }
                 nonProductiveTimeEntities.add(NonProductiveTimeEntity.builder()
-                        .hours(Double.valueOf(table.getText(row, 0)))
+                        .hours(BigDecimal.valueOf(Double.parseDouble(table.getText(row, 0))))
                         .operationalDistribution(operationalDistribution.toString())
                         .build());
             }
@@ -107,7 +106,7 @@ public class ParsingAttachmentsPDFToEntityService {
                     operationalDistribution.append(" ").append(table.getText(rowNP, 70));
                 }
                 nonProductiveTimeEntities.add(NonProductiveTimeEntity.builder()
-                        .hours(Double.valueOf(table.getText(row, 60)))
+                        .hours(BigDecimal.valueOf(Double.parseDouble(table.getText(row, 60))))
                         .operationalDistribution(operationalDistribution.toString())
                         .build());
             }
