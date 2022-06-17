@@ -33,7 +33,7 @@ public class ConvertingAttachmentsToCSVService {
             try {
                 for (UpdateAttachmentEntity updateAttachment : email.updateAttachmentEntities) {
                     List<String[]> csvData = convertEntityToCSV(updateAttachment);
-                    String attachmentName = "attachmentFiles/NPTReport_" + updateAttachment.name.substring(0, updateAttachment.name.length() - 4) + ".csv";
+                    String attachmentName = "src/main/resources/attachmentFiles/NPTReport_" + updateAttachment.name.substring(0, updateAttachment.name.length() - 4) + ".csv";
                     try (CSVWriter writer = new CSVWriter(new FileWriter(attachmentName))) {
                         writer.writeAll(csvData);
                     }
