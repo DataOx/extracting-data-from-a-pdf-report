@@ -23,19 +23,16 @@ import java.util.List;
 public class ParsingAttachmentsPDFToEntityService {
     private final UpdateAttachmentRepository updateAttachmentRepository;
 
-    public List<UpdateAttachmentEntity> parsingToUpdateAttachmentFromPDFAndSave(String fileAttachmentName, byte[] filePDF) {
-        UpdateAttachmentEntity updateAttachment;
-        List<UpdateAttachmentEntity> updateAttachmentEntities = new ArrayList<>();
+    public void parsingToUpdateAttachmentFromPDFAndSave(String fileAttachmentName, byte[] filePDF) {
         PdfDocument attachmentInPDF = new PdfDocument(filePDF);
         PdfTableExtractor extractor = new PdfTableExtractor(attachmentInPDF);
+        UpdateAttachmentEntity updateAttachment;
 
         for (PdfTable table : extractor.extractTable(0)) {
             updateAttachment = createUpdateAttachment(table);
             updateAttachment.setName(fileAttachmentName);
-            updateAttachmentEntities.add(updateAttachment);
             saveUpdateAttachmentToDB(updateAttachment);
         }
-        return updateAttachmentEntities;
     }
 
 
@@ -64,11 +61,14 @@ public class ParsingAttachmentsPDFToEntityService {
     }
 
     private LocalDate parsingDateFromPDF(PdfTable table) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-M-yyyy");
-        String date = table.getText(2, 45) + "-" +
-                table.getText(2, 47) + "-" +
+        String day = table.getText(2, 45);
+        String month = table.getText(2, 47);
+        String date = ((day.length() < 2) ? "0" + day : day) +
+                "-" +
+                ((month.length() < 2) ? "0" + month : month) +
+                "-" +
                 table.getText(2, 51);
-        return LocalDate.parse(date, formatter);
+        return LocalDate.parse(date, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
     }
 
     private List<NonProductiveTimeEntity> parsingAndSaveNonProductiveTimeFromPDF(PdfTable table) {
@@ -141,16 +141,6 @@ public class ParsingAttachmentsPDFToEntityService {
                     .Osecond(table.getText(row + 3, 31))
                     .R(table.getText(row + 3, 32))
                     .build());
-
-//            StringBuilder stringBuilderForDateField = new StringBuilder();
-//            String text = table.getText(row + 3, 48);
-//            stringBuilderForDateField.append(text).append(".");
-//            text = table.getText(row + 3, 58);
-//            stringBuilderForDateField.append(text).append(".");
-//            text = table.getText(row + 3, 64);
-//            stringBuilderForDateField.append(text).append("\r\n");
-//            stringBuilderForDateField.append("\r\n");
-//            System.out.println("строка: " + stringBuilderForDateField);
         }
         return bitHydraulicsEntities;
     }

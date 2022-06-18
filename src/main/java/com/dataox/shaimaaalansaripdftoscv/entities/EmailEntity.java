@@ -7,8 +7,6 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDate;
-import java.util.Date;
-import java.util.List;
 
 @Data
 @Builder
@@ -26,8 +24,8 @@ public class EmailEntity {
     public LocalDate sendingTime;
     @Column(name = "receiving_time")
     public LocalDate receivingTime;
-    @OneToMany(cascade = {CascadeType.ALL})
-    @JoinColumn(name = "email_id")
-    public List<UpdateAttachmentEntity> updateAttachmentEntities;
+    @OneToOne(cascade = {CascadeType.ALL})
+    @JoinColumn(name = "update_attachment_id")
+    public UpdateAttachmentEntity updateAttachment;
 
 }

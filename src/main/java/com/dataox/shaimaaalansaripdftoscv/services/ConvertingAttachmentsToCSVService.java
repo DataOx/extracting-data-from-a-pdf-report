@@ -31,23 +31,28 @@ public class ConvertingAttachmentsToCSVService {
         List<String> attachmentNames = new ArrayList<>();
         for (EmailEntity email : emailRepository.findAllByIsHandledIsFalse()) {
             try {
-                for (UpdateAttachmentEntity updateAttachment : email.updateAttachmentEntities) {
-                    List<String[]> csvData = convertEntityToCSV(updateAttachment);
-                    String attachmentName = "src/main/resources/attachmentFiles/NPTReport_" + updateAttachment.name.substring(0, updateAttachment.name.length() - 4) + ".csv";
-                    try (CSVWriter writer = new CSVWriter(new FileWriter(attachmentName))) {
-                        writer.writeAll(csvData);
-                    }
-                    attachmentNames.add(attachmentName);
+                UpdateAttachmentEntity updateAttachment = email.updateAttachment;
+                List<String[]> csvData = convertEntityToCSV(updateAttachment);
+                String attachmentName = "attachmentFiles/NPTReport_" + updateAttachment.name.substring(0, updateAttachment.name.length() - 4) + ".csv";
+                try (CSVWriter writer = new CSVWriter(new FileWriter(attachmentName))) {
+                    writer.writeAll(csvData);
                 }
-                if (sendingEmailToClientService.isEmailCreatedAndSendToClient(attachmentNames)) {
-                    email.setHandled(true);
-                    email.setSendingTime(LocalDate.now());
-                    emailRepository.save(email);
-                    log.info("Email with has been sent.");
-                }
+                attachmentNames.add(attachmentName);
             } catch (Exception e) {
                 sendingErrorsHandlerService.checkThatEmailHasErrorWhileSending(email);
             }
+        }
+        if (sendingEmailToClientService.isEmailCreatedAndSendToClient(attachmentNames)) {
+            allNotHandledEmailsHasBeenSent();
+            log.info("Email with attachments has been sent.");
+        }
+    }
+
+    private void allNotHandledEmailsHasBeenSent() {
+        for (EmailEntity email : emailRepository.findAllByIsHandledIsFalse()) {
+            email.setHandled(true);
+            email.setSendingTime(LocalDate.now());
+            emailRepository.save(email);
         }
     }
 

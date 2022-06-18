@@ -2,20 +2,18 @@ package com.dataox.shaimaaalansaripdftoscv.services;
 
 import com.dataox.shaimaaalansaripdftoscv.config.GraphConfig;
 import com.dataox.shaimaaalansaripdftoscv.entities.EmailEntity;
-import com.dataox.shaimaaalansaripdftoscv.entities.UpdateAttachmentEntity;
 import com.dataox.shaimaaalansaripdftoscv.repositories.EmailRepository;
 import com.dataox.shaimaaalansaripdftoscv.repositories.UpdateAttachmentRepository;
 import com.microsoft.graph.models.Attachment;
 import com.microsoft.graph.models.FileAttachment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.sql.*;
+import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -24,29 +22,20 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ReceivingEmailsWithAttachmentsService {
+    private final UpdateAttachmentRepository updateAttachmentRepository;
     private final ParsingAttachmentsPDFToEntityService parsingService;
     private final EmailRepository emailRepository;
-    private final UpdateAttachmentRepository updateAttachmentRepository;
 
     @Scheduled(fixedRate = 100000)
     public void receiveAttachmentsAndSaveInDB() {
         try {
-            for (Attachment attachment : GraphConfig.getAttachmentsList()) {
+            for (Attachment attachment : GraphConfig.getListOfEmailsAttachmentsThatReceiveLaterThenLastSaved(dateOfLastSavedEmail())) {
                 if (!checkIfAttachmentIsNecessary(attachment)) {
                     continue;
                 }
-                if (checkIfHandledEmailsNotExistInBD()) {
-                    saveNewEmailInDB(attachment);
-                }
-
-                List<UpdateAttachmentEntity> parsedFromPDFAttachments =
-                        parsingService.parsingToUpdateAttachmentFromPDFAndSave(attachment.name, ((FileAttachment) attachment).contentBytes);
-                EmailEntity email = emailRepository.findFirstByIsHandledIsFalse();
-                parsedFromPDFAttachments.addAll(email.getUpdateAttachmentEntities());
-                email.setUpdateAttachmentEntities(parsedFromPDFAttachments);
-                emailRepository.save(email);
-                log.info("Update email with id " + email.id + " in BD with new attachments.");
-
+                EmailEntity newEmail = saveNewEmailInDBAndReturn(attachment.lastModifiedDateTime);
+                updateEmailInDBWithMewAttachment(newEmail, attachment);
+                log.info("Update email with id " + newEmail.id + " in BD with new attachments.");
             }
         } catch (Exception e) {
             log.info("Can't received email or save it.");
@@ -54,8 +43,13 @@ public class ReceivingEmailsWithAttachmentsService {
     }
 
 
-    private boolean checkIfHandledEmailsNotExistInBD() {
-        return emailRepository.findAllByIsHandledIsFalse().isEmpty();
+    private LocalDateTime dateOfLastSavedEmail() {
+        try {
+            return (emailRepository.findTopByOrderByReceivingTimeDesc().receivingTime).atTime(0, 0, 1);
+        } catch (Exception e) {
+            log.info("There are no emails in DB.");
+            return LocalDateTime.now().minusDays(1L);
+        }
     }
 
     private boolean checkIfAttachmentIsNecessary(Attachment attachment) throws SQLException {
@@ -75,14 +69,21 @@ public class ReceivingEmailsWithAttachmentsService {
         return updateAttachmentRepository.findAllByOrderByIdAsc().stream().map(x -> x.name).collect(Collectors.toList());
     }
 
-    private void saveNewEmailInDB(Attachment attachment) {
+    private EmailEntity saveNewEmailInDBAndReturn(java.time.OffsetDateTime emailReceivingTime) {
         EmailEntity email = EmailEntity.builder()
-                .receivingTime(LocalDate.from(attachment.lastModifiedDateTime.toLocalDateTime()))
+                .receivingTime(LocalDate.from(emailReceivingTime.toLocalDateTime()))
                 .sendingTime(null)
                 .build();
 
         emailRepository.save(email);
         log.info("Create new email with id " + email.id + " in BD.");
+        return email;
+    }
+
+    private void updateEmailInDBWithMewAttachment(EmailEntity email, Attachment attachment) {
+        parsingService.parsingToUpdateAttachmentFromPDFAndSave(attachment.name, ((FileAttachment) attachment).contentBytes);
+        email.setUpdateAttachment(updateAttachmentRepository.findTopByOrderByIdDesc());
+        emailRepository.save(email);
     }
 
 }

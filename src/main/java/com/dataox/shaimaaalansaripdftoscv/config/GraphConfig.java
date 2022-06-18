@@ -6,7 +6,6 @@ import com.azure.identity.DeviceCodeInfo;
 import com.microsoft.graph.authentication.TokenCredentialAuthProvider;
 import com.microsoft.graph.models.*;
 import com.microsoft.graph.requests.*;
-import com.spire.ms.System.DateTime;
 import lombok.extern.log4j.Log4j2;
 import okhttp3.Request;
 import org.springframework.util.ResourceUtils;
@@ -14,7 +13,6 @@ import org.springframework.util.ResourceUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.*;
@@ -33,9 +31,9 @@ public class GraphConfig {
         }
     }
 
-    public static List<Attachment> getAttachmentsList() throws Exception {
+    public static List<Attachment> getListOfEmailsAttachmentsThatReceiveLaterThenLastSaved(LocalDateTime date) throws Exception {
         try {
-            final MessageCollectionPage messagesFromInbox = getInboxMessages(String.valueOf(LocalDateTime.now().minusDays(1L)).substring(0, 19) + "Z");
+            final MessageCollectionPage messagesFromInbox = getInboxMessages(String.valueOf(date).substring(0, 19) + "Z");
             List<Attachment> attachments = new ArrayList<>();
             for (Message message : messagesFromInbox.getCurrentPage()) {
                 AttachmentCollectionRequest request = _userClient.me().messages(message.id).attachments().buildRequest();

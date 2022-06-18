@@ -8,8 +8,8 @@ import java.util.List;
 
 @Repository
 public interface EmailRepository extends CrudRepository<EmailEntity, Long> {
-
     List<EmailEntity> findAllByIsHandledIsFalse();
-    EmailEntity findFirstByIsHandledIsFalse();
+
+    EmailEntity findTopByOrderByReceivingTimeDesc();
 
 }
