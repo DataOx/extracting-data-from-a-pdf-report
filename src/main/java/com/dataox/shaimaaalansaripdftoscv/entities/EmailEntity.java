@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -21,9 +22,9 @@ public class EmailEntity {
     public Long id;
     public boolean isHandled;
     public boolean hasSendingError;
-    public LocalDate sendingTime;
+    public LocalDateTime sendingTime;
     @Column(name = "receiving_time")
-    public LocalDate receivingTime;
+    public LocalDateTime receivingTime;
     @OneToOne(cascade = {CascadeType.ALL})
     @JoinColumn(name = "update_attachment_id")
     public UpdateAttachmentEntity updateAttachment;

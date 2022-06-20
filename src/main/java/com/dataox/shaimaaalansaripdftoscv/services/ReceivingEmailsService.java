@@ -11,8 +11,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.sql.SQLException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -21,9 +19,9 @@ import java.util.stream.Collectors;
 @Log4j2
 @Service
 @RequiredArgsConstructor
-public class ReceivingEmailsWithAttachmentsService {
+public class ReceivingEmailsService {
     private final UpdateAttachmentRepository updateAttachmentRepository;
-    private final ParsingAttachmentsPDFToEntityService parsingService;
+    private final ParsingService parsingService;
     private final EmailRepository emailRepository;
 
     @Scheduled(fixedRate = 100000)
@@ -45,14 +43,14 @@ public class ReceivingEmailsWithAttachmentsService {
 
     private LocalDateTime dateOfLastSavedEmail() {
         try {
-            return (emailRepository.findTopByOrderByReceivingTimeDesc().receivingTime).atTime(0, 0, 1);
+            return (emailRepository.findTopByOrderByReceivingTimeDesc().receivingTime);
         } catch (Exception e) {
             log.info("There are no emails in DB.");
             return LocalDateTime.now().minusDays(1L);
         }
     }
 
-    private boolean checkIfAttachmentIsNecessary(Attachment attachment) throws SQLException {
+    private boolean checkIfAttachmentIsNecessary(Attachment attachment) {
         List<String> attachmentsNamesInDB = findAttachmentsNamesInDB();
         String attachmentName = attachment.name;
 
@@ -71,7 +69,7 @@ public class ReceivingEmailsWithAttachmentsService {
 
     private EmailEntity saveNewEmailInDBAndReturn(java.time.OffsetDateTime emailReceivingTime) {
         EmailEntity email = EmailEntity.builder()
-                .receivingTime(LocalDate.from(emailReceivingTime.toLocalDateTime()))
+                .receivingTime(emailReceivingTime.toLocalDateTime())
                 .sendingTime(null)
                 .build();
 

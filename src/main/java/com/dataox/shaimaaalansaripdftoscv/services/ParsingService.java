@@ -20,7 +20,7 @@ import java.util.List;
 @Log4j2
 @Service
 @AllArgsConstructor
-public class ParsingAttachmentsPDFToEntityService {
+public class ParsingService {
     private final UpdateAttachmentRepository updateAttachmentRepository;
 
     public void parsingToUpdateAttachmentFromPDFAndSave(String fileAttachmentName, byte[] filePDF) {
@@ -124,13 +124,21 @@ public class ParsingAttachmentsPDFToEntityService {
                     .jetSize(table.getText(row, 21))
                     .depthIn(table.getText(row, 44))
                     .depthOut(table.getText(row, 49))
+                    .FTG(table.getText(row, 62))
+                    .hours(table.getText(row, 74))
+                    .FPH(table.getText(row, 77))
                     .serNo(table.getText(row, 83))
                     .manufacturer(table.getText(row, 88))
+                    .RPM(table.getText(row + 3, 0))
+                    .WOB(table.getText(row + 3, 4))
                     .PSI(table.getText(row + 3, 35))
                     .liner(table.getText(row + 3, 44))
                     .SPM(table.getText(row + 3, 48))
                     .GPM(table.getText(row + 3, 58))
                     .PHHP(table.getText(row + 3, 64))
+                    .BHHP(table.getText(row + 3, 74))
+                    .TORQ(table.getText(row + 3, 77))
+                    .NVEL(table.getText(row + 3, 86))
                     .AVEL(table.getText(row + 3, 92))
                     .I(table.getText(row + 3, 14))
                     .O(table.getText(row + 3, 17))
@@ -139,9 +147,12 @@ public class ParsingAttachmentsPDFToEntityService {
                     .B(table.getText(row + 3, 22))
                     .G(table.getText(row + 3, 26))
                     .Osecond(table.getText(row + 3, 31))
-                    .R(table.getText(row + 3, 32))
+                    .R(table.getText(row + 3, 32).equals("BH") ?
+                            table.getText(row + 3, 32) + "A" :
+                            table.getText(row + 3, 32))
                     .build());
         }
+
         return bitHydraulicsEntities;
     }
 

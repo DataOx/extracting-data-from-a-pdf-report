@@ -29,7 +29,7 @@ public class BITHydraulicsEntity {
     public String FPH;
     public String serNo;
     public String manufacturer;
-    public String PRM;
+    public String RPM;
     public String WOB;
     public String I;
     public String O;

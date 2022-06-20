@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.FileWriter;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,13 +20,13 @@ import java.util.List;
 @Log4j2
 @Service
 @AllArgsConstructor
-public class ConvertingAttachmentsToCSVService {
+public class ConvertService {
     private final EmailRepository emailRepository;
-    private final SendingEmailToClientService sendingEmailToClientService;
-    private final SendingErrorsHandlerService sendingErrorsHandlerService;
+    private final SendingEmailsService sendingEmailsService;
+    private final HandleErrorsService handleErrorsService;
 
-    @Scheduled(cron = "0 0 13 * * ?")
-    @Scheduled(cron = "0 30 7 * * ?")
+    @Scheduled(cron = "${morning.scheduler}")
+    @Scheduled(cron = "${day.scheduler}")
     public void createCSVFileAndSendWithEmail() {
         List<String> attachmentNames = new ArrayList<>();
         for (EmailEntity email : emailRepository.findAllByIsHandledIsFalse()) {
@@ -39,10 +39,10 @@ public class ConvertingAttachmentsToCSVService {
                 }
                 attachmentNames.add(attachmentName);
             } catch (Exception e) {
-                sendingErrorsHandlerService.checkThatEmailHasErrorWhileSending(email);
+                handleErrorsService.checkThatEmailHasErrorWhileSending(email);
             }
         }
-        if (sendingEmailToClientService.isEmailCreatedAndSendToClient(attachmentNames)) {
+        if (sendingEmailsService.isEmailCreatedAndSendToClient(attachmentNames)) {
             allNotHandledEmailsHasBeenSent();
             log.info("Email with attachments has been sent.");
         }
@@ -51,7 +51,7 @@ public class ConvertingAttachmentsToCSVService {
     private void allNotHandledEmailsHasBeenSent() {
         for (EmailEntity email : emailRepository.findAllByIsHandledIsFalse()) {
             email.setHandled(true);
-            email.setSendingTime(LocalDate.now());
+            email.setSendingTime(LocalDateTime.now());
             emailRepository.save(email);
         }
     }
@@ -71,8 +71,8 @@ public class ConvertingAttachmentsToCSVService {
         list.add(new String[]{entity.area, entity.team, entity.kocTeamLeader, entity.RIG});
         list.add(blank);
         list.add(new String[]{"Bit Hydraulics"});
-        list.add(new String[]{"BIT NO", "SIZE", "MODEL", "JET SIZE", "DEPTH IN", "DEPTH OUT", "FTG", "HOURS", "FPH",
-                "SER NO", "MANUFACTURER"});
+        list.add(new String[]{"BIT NO.", "SIZE", "MODEL", "JET SIZE", "DEPTH IN", "DEPTH OUT", "FTG", "HOURS", "FPH",
+                "SER NO.", "MANUFACTURER"});
         String[] bitColumnsValues;
         for (BITHydraulicsEntity bitHydraulics : entity.getBITHydraulics()) {
             bitColumnsValues = new String[]{bitHydraulics.BIT, bitHydraulics.size, bitHydraulics.model,
@@ -84,8 +84,8 @@ public class ConvertingAttachmentsToCSVService {
         list.add(new String[]{"RPM", "WOB", "I", "O", "D", "L", "B", "G", "O", "R", "PSI", "LINER", "SPM", "GPM",
                 "P.HHP", "B.HHP", "TORQ", "N.VEL", "A.VEL(DC/HW/DP)"});
         for (BITHydraulicsEntity bitHydraulics : entity.getBITHydraulics()) {
-            bitColumnsValues = new String[]{bitHydraulics.PRM, bitHydraulics.WOB, bitHydraulics.I, bitHydraulics.O,
-                    bitHydraulics.D, bitHydraulics.L, bitHydraulics.B, bitHydraulics.G, bitHydraulics.O, bitHydraulics.R,
+            bitColumnsValues = new String[]{bitHydraulics.RPM, bitHydraulics.WOB, bitHydraulics.I, bitHydraulics.O,
+                    bitHydraulics.D, bitHydraulics.L, bitHydraulics.B, bitHydraulics.G, bitHydraulics.Osecond, bitHydraulics.R,
                     bitHydraulics.PSI, bitHydraulics.liner, bitHydraulics.SPM, bitHydraulics.GPM, bitHydraulics.PHHP,
                     bitHydraulics.BHHP, bitHydraulics.TORQ, bitHydraulics.NVEL, bitHydraulics.AVEL};
             list.add(bitColumnsValues);

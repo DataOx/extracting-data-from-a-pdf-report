@@ -3,10 +3,11 @@ package com.dataox.shaimaaalansaripdftoscv.services;
 import com.dataox.shaimaaalansaripdftoscv.config.GraphConfig;
 import com.microsoft.graph.models.Attachment;
 import com.microsoft.graph.models.FileAttachment;
-import com.microsoft.graph.models.User;
 import com.microsoft.graph.requests.AttachmentCollectionResponse;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -18,26 +19,30 @@ import java.util.List;
 
 @Log4j2
 @Service
-@AllArgsConstructor
-public class SendingEmailToClientService {
+@RequiredArgsConstructor
+public class SendingEmailsService {
+    @Value("${recipient.email}")
+    private String recipientEmail;
 
     public boolean isEmailCreatedAndSendToClient(List<String> attachmentNames) {
         try {
-            final User senderUser = GraphConfig.getRecipientUser();
-            final String recipientEmailAddress = senderUser.mail == null ? senderUser.userPrincipalName : senderUser.mail;
-            List<Attachment> fileAttachments = new ArrayList<>();
-            AttachmentCollectionResponse attachment = new AttachmentCollectionResponse();
-            for (String updateAttachmentName : attachmentNames) {
-                fileAttachments.add(getFileAttachment(updateAttachmentName));
-            }
-            attachment.value = fileAttachments;
-            GraphConfig.sendEmail("NP Report", createEmailsBody(), attachment, recipientEmailAddress);
+            sendEmailToClient(attachmentNames);
             return true;
         } catch (Exception e) {
             log.info("Error sending mail: ");
             log.info(e.getMessage());
             return false;
         }
+    }
+
+    public void sendEmailToClient(List<String> attachmentNames) throws Exception {
+        List<Attachment> fileAttachments = new ArrayList<>();
+        AttachmentCollectionResponse attachment = new AttachmentCollectionResponse();
+        for (String updateAttachmentName : attachmentNames) {
+            fileAttachments.add(getFileAttachment(updateAttachmentName));
+        }
+        attachment.value = fileAttachments;
+        GraphConfig.sendEmail("NP Report", createEmailsBody(), attachment, recipientEmail);
     }
 
     private static FileAttachment getFileAttachment(String updateAttachmentName) throws Exception {

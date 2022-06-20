@@ -9,6 +9,5 @@ import java.util.List;
 @Repository
 public interface UpdateAttachmentRepository extends CrudRepository<UpdateAttachmentEntity, Long> {
     List<UpdateAttachmentEntity> findAllByOrderByIdAsc();
-
     UpdateAttachmentEntity findTopByOrderByIdDesc();
 }

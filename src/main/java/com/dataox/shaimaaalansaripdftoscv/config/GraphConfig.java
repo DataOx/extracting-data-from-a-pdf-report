@@ -114,7 +114,7 @@ public class GraphConfig {
                 .messages()
                 .buildRequest()
                 .filter("receivedDateTime ge " + timeForReceiveMessage)
-                .orderBy("receivedDateTime DESC")
+                .orderBy("receivedDateTime ASC")
                 .get();
     }
 
