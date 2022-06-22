@@ -1,74 +1,61 @@
 package com.dataox.shaimaaalansaripdftoscv.services;
 
+import com.dataox.shaimaaalansaripdftoscv.domain.ConvertData;
 import com.dataox.shaimaaalansaripdftoscv.entities.BITHydraulicsEntity;
 import com.dataox.shaimaaalansaripdftoscv.entities.EmailEntity;
 import com.dataox.shaimaaalansaripdftoscv.entities.NonProductiveTimeEntity;
 import com.dataox.shaimaaalansaripdftoscv.entities.UpdateAttachmentEntity;
-import com.dataox.shaimaaalansaripdftoscv.repositories.EmailRepository;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
-import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.io.FileOutputStream;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
+import java.io.ByteArrayOutputStream;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Log4j2
 @Service
-@AllArgsConstructor
 public class ConvertService {
-    private final EmailRepository emailRepository;
-    private final SendingEmailsService sendingEmailsService;
-    private final HandleErrorsService handleErrorsService;
+
     private static final Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 19, Font.BOLD);
     private static final Font subFont = new Font(Font.FontFamily.TIMES_ROMAN, 16, Font.BOLD);
     private static final Font smallText = new Font(Font.FontFamily.TIMES_ROMAN, 12, Font.NORMAL);
     private static final Font smallTables = new Font(Font.FontFamily.TIMES_ROMAN, 10, Font.NORMAL);
 
-    @Scheduled(cron = "${morning.scheduler}")
-    @Scheduled(cron = "${day.scheduler}")
-    public void createPDFFileAndSendWithEmail() {
-        java.util.List<String> attachmentNames = new ArrayList<>();
+    public ConvertData createPdfFiles(List<EmailEntity> emails) {
+        Map<String, byte[]> attachments = new HashMap<>();
         List<EmailEntity> correctEmails = new ArrayList<>();
         List<EmailEntity> failedEmails = new ArrayList<>();
-        for (EmailEntity email : emailRepository.findAllByHandledIsFalse()) {
+        for (EmailEntity email : emails) {
             try {
                 UpdateAttachmentEntity updateAttachment = email.updateAttachment;
                 String attachmentName = "attachmentFiles/NPTReport_" + updateAttachment.name.substring(0, updateAttachment.name.length() - 4) + ".pdf";
-                attachmentNames.add(attachmentName);
 
                 Document document = new Document(PageSize.A4.rotate(), 18, 18, 10, 15);
-                PdfWriter.getInstance(document, new FileOutputStream(String.valueOf((Paths.get(attachmentName)))));
+
+                ByteArrayOutputStream docOutput = new ByteArrayOutputStream();
+
+                PdfWriter.getInstance(document, docOutput);
                 document.open();
                 addMetaData(document);
                 addPage(document, updateAttachment);
                 document.close();
+
+                attachments.put(attachmentName, docOutput.toByteArray());
+
                 correctEmails.add(email);
+                docOutput.close();
             } catch (Exception e) {
                 failedEmails.add(email);
                 log.info("Error in converting to PDF.");
             }
         }
-        if (sendingEmailsService.isEmailCreatedAndSendToClient(attachmentNames)) {
-            allNotHandledEmailsHasBeenSent(correctEmails);
-            log.info("Email with attachments has been sent.");
-        }
-        handleErrorsService.checkThatEmailHasErrorWhileSending(failedEmails);
-    }
 
-    private void allNotHandledEmailsHasBeenSent(List<EmailEntity> correctEmails) {
-        LocalDateTime now = LocalDateTime.now();
-        for (EmailEntity email : correctEmails) {
-            email.setHandled(true);
-            email.setSendingTime(now);
-            emailRepository.save(email);
-        }
+        return new ConvertData(attachments, correctEmails, failedEmails);
     }
 
     private void addPage(Document document, UpdateAttachmentEntity entity) throws DocumentException {

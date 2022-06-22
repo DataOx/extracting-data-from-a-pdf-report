@@ -8,7 +8,6 @@ import com.microsoft.graph.models.Attachment;
 import com.microsoft.graph.models.FileAttachment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -24,7 +23,6 @@ public class ReceivingEmailsService {
     private final ParsingService parsingService;
     private final EmailRepository emailRepository;
 
-    @Scheduled(fixedRate = 100000, initialDelay = 10000)
     public void receiveAttachmentsAndSaveInDB() {
         try {
             for (Attachment attachment : GraphConfig.getListOfEmailsAttachmentsThatReceiveLaterThenLastSaved(dateOfLastSavedEmail())) {
