@@ -37,7 +37,7 @@ public class ConvertService {
         java.util.List<String> attachmentNames = new ArrayList<>();
         List<EmailEntity> correctEmails = new ArrayList<>();
         List<EmailEntity> failedEmails = new ArrayList<>();
-        for (EmailEntity email : emailRepository.findAllByIsHandledIsFalse()) {
+        for (EmailEntity email : emailRepository.findAllByHandledIsFalse()) {
             try {
                 UpdateAttachmentEntity updateAttachment = email.updateAttachment;
                 String attachmentName = "attachmentFiles/NPTReport_" + updateAttachment.name.substring(0, updateAttachment.name.length() - 4) + ".pdf";

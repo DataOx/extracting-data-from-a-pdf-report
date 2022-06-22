@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -20,7 +19,8 @@ public class EmailEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")
     public Long id;
-    public boolean isHandled;
+    @Column(name = "is_handled")
+    public boolean handled;
     public boolean hasSendingError;
     public LocalDateTime sendingTime;
     @Column(name = "receiving_time")
