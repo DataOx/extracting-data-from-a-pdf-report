@@ -20,6 +20,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.apache.commons.lang3.StringUtils.substringAfter;
+
 @Log4j2
 @Service
 @AllArgsConstructor
@@ -122,7 +124,6 @@ public class ParsingService {
     private List<BITHydraulicsEntity> parsingAndSaveBITFromPDF(PdfTable table, PdfPageBase pdfPageBase) {
         List<BITHydraulicsEntity> bitHydraulicsEntities = new ArrayList<>();
         for (int row = 7; row <= 8; row++) {
-            String foo = table.getText(row + 3, 32);
             BITHydraulicsEntity bitHydraulics = BITHydraulicsEntity.builder()
                     .BIT(table.getText(row, 0))
                     .size(table.getText(row, 2))
@@ -154,14 +155,13 @@ public class ParsingService {
                     .G(table.getText(row + 3, 26))
                     .Osecond(table.getText(row + 3, 31))
                     .build();
+            String s;
             if (row == 7) {
-                bitHydraulics.setR(pdfPageBase.extractText(new Rectangle(185, 175, 13, 13))
-                        .substring(pdfPageBase.extractText(new Rectangle(184, 175, 13, 13)).indexOf("Java.") + 5).trim());
+                s = pdfPageBase.extractText(new Rectangle(185, 175, 13, 13));
+            } else {
+                s = pdfPageBase.extractText(new Rectangle(185, 185, 13, 13));
             }
-            if (row == 8) {
-                bitHydraulics.setR(pdfPageBase.extractText(new Rectangle(185, 185, 13, 13))
-                        .substring(pdfPageBase.extractText(new Rectangle(184, 185, 13, 13)).indexOf("Java.") + 5).trim());
-            }
+            bitHydraulics.setR(substringAfter(s, "Java.").trim());
             bitHydraulicsEntities.add(bitHydraulics);
         }
         return bitHydraulicsEntities;
