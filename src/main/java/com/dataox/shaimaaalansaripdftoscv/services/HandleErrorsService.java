@@ -20,15 +20,18 @@ public class HandleErrorsService {
 
     public void checkThatEmailHasErrorWhileSending(EmailEntity email) {
         email.setHasSendingError(true);
+        email.setHandled(true);
         emailRepository.save(email);
     }
 
-    @Scheduled(fixedRate = 100000000, initialDelay = 100000)
+    @Scheduled(cron = "${morning.scheduler}")
+    @Scheduled(cron = "${day.scheduler}")
     public void resendEmail() {
-        if (!emailRepository.findAllByHasSendingErrorIsTrue().isEmpty()) {
+        List<EmailEntity> emailEntities = emailRepository.findAllByHasSendingErrorIsTrue();
+        if (!emailEntities.isEmpty()) {
             try {
                 List<String> attachmentNames = new ArrayList<>();
-                for (EmailEntity email : emailRepository.findAllByHasSendingErrorIsTrue()) {
+                for (EmailEntity email : emailEntities) {
                     email.setHasSendingError(false);
                     emailRepository.save(email);
                     attachmentNames.add(email.updateAttachment.name);
@@ -38,15 +41,6 @@ public class HandleErrorsService {
                 log.info("Can't resend emails.");
             }
         }
-    }
-
-    private void resendEmailThatReceivedAsSpam(LocalDate date) throws Exception {
-        List<String> attachmentNames = new ArrayList<>();
-        for (EmailEntity email : emailRepository.findAllBySendingTimeGreaterThan(date)) {
-            emailRepository.save(email);
-            attachmentNames.add(email.updateAttachment.name);
-        }
-        sendingEmailsService.sendEmailToClient(attachmentNames);
     }
 
 }

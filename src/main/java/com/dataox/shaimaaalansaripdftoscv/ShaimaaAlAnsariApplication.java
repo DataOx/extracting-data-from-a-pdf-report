@@ -7,11 +7,11 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableScheduling
 @SpringBootApplication
-public class ShaimaaAlAnsariPdfToScvApplication {
+public class ShaimaaAlAnsariApplication {
 
     public static void main(String[] args) throws Exception {
         GraphConfig.initializeGraphAccount();
-        SpringApplication.run(ShaimaaAlAnsariPdfToScvApplication.class, args);
+        SpringApplication.run(ShaimaaAlAnsariApplication.class, args);
     }
 
 }
