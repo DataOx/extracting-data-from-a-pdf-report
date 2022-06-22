@@ -4,15 +4,21 @@ import com.azure.identity.DeviceCodeCredential;
 import com.azure.identity.DeviceCodeCredentialBuilder;
 import com.azure.identity.DeviceCodeInfo;
 import com.microsoft.graph.authentication.TokenCredentialAuthProvider;
+import com.microsoft.graph.httpcore.AuthenticationHandler;
+import com.microsoft.graph.httpcore.HttpClients;
+import com.microsoft.graph.httpcore.RedirectHandler;
+import com.microsoft.graph.httpcore.RetryHandler;
 import com.microsoft.graph.models.*;
 import com.microsoft.graph.requests.*;
 import lombok.extern.log4j.Log4j2;
+import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import org.springframework.util.ResourceUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.*;
@@ -43,20 +49,9 @@ public class GraphConfig {
             }
             return attachments;
         } catch (Exception e) {
-            log.info("Can't receive emails.");
+            log.info("Can't receive emails. " + e);
             throw e;
         }
-    }
-
-    public static User getRecipientUser() throws Exception {
-        if (_userClient == null) {
-            throw new Exception("Graph has not been initialized for user auth.");
-        }
-
-        return _userClient.me()
-                .buildRequest()
-                .select("displayName,mail,userPrincipalName")
-                .get();
     }
 
     public static void sendEmail(String subject, String body, AttachmentCollectionResponse attachment, String recipientsEmailAddress) throws Exception {
@@ -98,9 +93,15 @@ public class GraphConfig {
                 .challengeConsumer(challenge)
                 .build();
         final TokenCredentialAuthProvider authProvider = new TokenCredentialAuthProvider(graphUserScopes, _deviceCodeCredential);
+        OkHttpClient client = HttpClients.custom()
+                .addInterceptor(new AuthenticationHandler(authProvider))
+                .addInterceptor(new RetryHandler())
+                .addInterceptor(new RedirectHandler())
+                .connectTimeout(Duration.ofMinutes(1))
+                .build();
 
         _userClient = GraphServiceClient.builder()
-                .authenticationProvider(authProvider)
+                .authenticationProvider(authProvider).httpClient(client)
                 .buildClient();
     }
 

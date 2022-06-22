@@ -24,7 +24,7 @@ public class ReceivingEmailsService {
     private final ParsingService parsingService;
     private final EmailRepository emailRepository;
 
-    @Scheduled(fixedRate = 100000)
+    @Scheduled(fixedRate = 100000, initialDelay = 10000)
     public void receiveAttachmentsAndSaveInDB() {
         try {
             for (Attachment attachment : GraphConfig.getListOfEmailsAttachmentsThatReceiveLaterThenLastSaved(dateOfLastSavedEmail())) {
@@ -46,7 +46,7 @@ public class ReceivingEmailsService {
             return (emailRepository.findTopByOrderByReceivingTimeDesc().receivingTime);
         } catch (Exception e) {
             log.info("There are no emails in DB.");
-            return LocalDateTime.now().minusDays(1L);
+            return LocalDateTime.now().minusDays(3L);
         }
     }
 

@@ -5,12 +5,15 @@ import com.dataox.shaimaaalansaripdftoscv.entities.NonProductiveTimeEntity;
 import com.dataox.shaimaaalansaripdftoscv.entities.UpdateAttachmentEntity;
 import com.dataox.shaimaaalansaripdftoscv.repositories.UpdateAttachmentRepository;
 import com.spire.pdf.PdfDocument;
+import com.spire.pdf.PdfPageBase;
 import com.spire.pdf.utilities.PdfTable;
 import com.spire.pdf.utilities.PdfTableExtractor;
+import com.spire.pdf.widget.PdfPageCollection;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
+import java.awt.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -29,7 +32,8 @@ public class ParsingService {
         UpdateAttachmentEntity updateAttachment;
 
         for (PdfTable table : extractor.extractTable(0)) {
-            updateAttachment = createUpdateAttachment(table);
+            PdfPageCollection pdfPageCollection = attachmentInPDF.getPages();
+            updateAttachment = createUpdateAttachment(table, pdfPageCollection.get(0));
             updateAttachment.setName(fileAttachmentName);
             saveUpdateAttachmentToDB(updateAttachment);
         }
@@ -41,7 +45,7 @@ public class ParsingService {
         log.info("Attachment with id " + attachment.id + " saved in DB.");
     }
 
-    private UpdateAttachmentEntity createUpdateAttachment(PdfTable table) {
+    private UpdateAttachmentEntity createUpdateAttachment(PdfTable table, PdfPageBase pdfPageBase) {
         String firstRowInPDF = table.getText(0, 0);
         return UpdateAttachmentEntity.builder()
                 .area(firstRowInPDF.substring(firstRowInPDF.indexOf("AREA:") + 5, firstRowInPDF.indexOf("GC")))
@@ -53,9 +57,10 @@ public class ParsingService {
                 .drillingBHA(table.getText(14, 12))
                 .profile(table.getText(15, 3))
                 .formation(table.getText(56, 11))
-                .kocTeamLeader(table.getText(57, 91))
+                .kocTeamLeader(pdfPageBase.extractText(new Rectangle(470, 730, 120, 10))
+                        .substring(pdfPageBase.extractText(new Rectangle(470, 730, 120, 10)).indexOf("Java.") + 5).trim())
                 .date(parsingDateFromPDF(table))
-                .BITHydraulics(parsingAndSaveBITFromPDF(table))
+                .BITHydraulics(parsingAndSaveBITFromPDF(table, pdfPageBase))
                 .nonProductiveTime(parsingAndSaveNonProductiveTimeFromPDF(table))
                 .build();
     }
@@ -114,9 +119,10 @@ public class ParsingService {
         return nonProductiveTimeEntities;
     }
 
-    private List<BITHydraulicsEntity> parsingAndSaveBITFromPDF(PdfTable table) {
+    private List<BITHydraulicsEntity> parsingAndSaveBITFromPDF(PdfTable table, PdfPageBase pdfPageBase) {
         List<BITHydraulicsEntity> bitHydraulicsEntities = new ArrayList<>();
         for (int row = 7; row <= 8; row++) {
+            String foo = table.getText(row + 3, 32);
             bitHydraulicsEntities.add(BITHydraulicsEntity.builder()
                     .BIT(table.getText(row, 0))
                     .size(table.getText(row, 2))
@@ -147,12 +153,10 @@ public class ParsingService {
                     .B(table.getText(row + 3, 22))
                     .G(table.getText(row + 3, 26))
                     .Osecond(table.getText(row + 3, 31))
-                    .R(table.getText(row + 3, 32).equals("BH") ?
-                            table.getText(row + 3, 32) + "A" :
-                            table.getText(row + 3, 32))
+                    .R(pdfPageBase.extractText(new Rectangle(185, 185, 13, 13))
+                            .substring(pdfPageBase.extractText(new Rectangle(184, 185, 13, 13)).indexOf("Java.") + 5).trim())
                     .build());
         }
-
         return bitHydraulicsEntities;
     }
 

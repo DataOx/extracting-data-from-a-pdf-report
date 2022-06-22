@@ -10,8 +10,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class ShaimaaAlAnsariPdfToScvApplication {
 
     public static void main(String[] args) throws Exception {
-        SpringApplication.run(ShaimaaAlAnsariPdfToScvApplication.class, args);
         GraphConfig.initializeGraphAccount();
+        SpringApplication.run(ShaimaaAlAnsariPdfToScvApplication.class, args);
     }
 
 }

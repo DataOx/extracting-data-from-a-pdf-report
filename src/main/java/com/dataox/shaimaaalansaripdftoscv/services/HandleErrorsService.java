@@ -23,22 +23,24 @@ public class HandleErrorsService {
         emailRepository.save(email);
     }
 
-    @Scheduled(fixedRate = 100000000)
+    @Scheduled(fixedRate = 100000000, initialDelay = 100000)
     public void resendEmail() {
-        try {
-            List<String> attachmentNames = new ArrayList<>();
-            for (EmailEntity email : emailRepository.findAllByHasSendingErrorIsTrue()) {
-                email.setHasSendingError(false);
-                emailRepository.save(email);
-                attachmentNames.add(email.updateAttachment.name);
+        if (!emailRepository.findAllByHasSendingErrorIsTrue().isEmpty()) {
+            try {
+                List<String> attachmentNames = new ArrayList<>();
+                for (EmailEntity email : emailRepository.findAllByHasSendingErrorIsTrue()) {
+                    email.setHasSendingError(false);
+                    emailRepository.save(email);
+                    attachmentNames.add(email.updateAttachment.name);
+                }
+                sendingEmailsService.sendEmailToClient(attachmentNames);
+            } catch (Exception e) {
+                log.info("Can't resend emails.");
             }
-            sendingEmailsService.sendEmailToClient(attachmentNames);
-        } catch (Exception e) {
-            log.info("Can't resend emails.");
         }
     }
 
-    private void resendEmailTharReceivedAsSpam(LocalDate date) throws Exception {
+    private void resendEmailThatReceivedAsSpam(LocalDate date) throws Exception {
         List<String> attachmentNames = new ArrayList<>();
         for (EmailEntity email : emailRepository.findAllBySendingTimeGreaterThan(date)) {
             emailRepository.save(email);
