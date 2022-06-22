@@ -123,7 +123,7 @@ public class ParsingService {
         List<BITHydraulicsEntity> bitHydraulicsEntities = new ArrayList<>();
         for (int row = 7; row <= 8; row++) {
             String foo = table.getText(row + 3, 32);
-            bitHydraulicsEntities.add(BITHydraulicsEntity.builder()
+            BITHydraulicsEntity bitHydraulics = BITHydraulicsEntity.builder()
                     .BIT(table.getText(row, 0))
                     .size(table.getText(row, 2))
                     .model(table.getText(row, 9))
@@ -153,9 +153,16 @@ public class ParsingService {
                     .B(table.getText(row + 3, 22))
                     .G(table.getText(row + 3, 26))
                     .Osecond(table.getText(row + 3, 31))
-                    .R(pdfPageBase.extractText(new Rectangle(185, 185, 13, 13))
-                            .substring(pdfPageBase.extractText(new Rectangle(184, 185, 13, 13)).indexOf("Java.") + 5).trim())
-                    .build());
+                    .build();
+            if (row == 7) {
+                bitHydraulics.setR(pdfPageBase.extractText(new Rectangle(185, 175, 13, 13))
+                        .substring(pdfPageBase.extractText(new Rectangle(184, 175, 13, 13)).indexOf("Java.") + 5).trim());
+            }
+            if (row == 8) {
+                bitHydraulics.setR(pdfPageBase.extractText(new Rectangle(185, 185, 13, 13))
+                        .substring(pdfPageBase.extractText(new Rectangle(184, 185, 13, 13)).indexOf("Java.") + 5).trim());
+            }
+            bitHydraulicsEntities.add(bitHydraulics);
         }
         return bitHydraulicsEntities;
     }
