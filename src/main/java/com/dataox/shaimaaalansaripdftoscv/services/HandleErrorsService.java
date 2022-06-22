@@ -7,8 +7,11 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import static java.time.LocalDateTime.now;
 
 @Log4j2
 @Service
@@ -30,10 +33,12 @@ public class HandleErrorsService {
     public void resendEmail() {
         List<EmailEntity> emailEntities = emailRepository.findAllByHasSendingErrorIsTrue();
         if (!emailEntities.isEmpty()) {
+            LocalDateTime now = now();
             try {
                 List<String> attachmentNames = new ArrayList<>();
                 for (EmailEntity email : emailEntities) {
                     email.setHasSendingError(false);
+                    email.setSendingTime(now);
                     emailRepository.save(email);
                     attachmentNames.add(email.updateAttachment.name);
                 }

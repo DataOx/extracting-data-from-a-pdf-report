@@ -63,9 +63,10 @@ public class ConvertService {
     }
 
     private void allNotHandledEmailsHasBeenSent(List<EmailEntity> correctEmails) {
+        LocalDateTime now = LocalDateTime.now();
         for (EmailEntity email : correctEmails) {
             email.setHandled(true);
-            email.setSendingTime(LocalDateTime.now());
+            email.setSendingTime(now);
             emailRepository.save(email);
         }
     }
