@@ -35,6 +35,8 @@ public class ConvertService {
     @Scheduled(cron = "${day.scheduler}")
     public void createPDFFileAndSendWithEmail() {
         java.util.List<String> attachmentNames = new ArrayList<>();
+        List<EmailEntity> correctEmails = new ArrayList<>();
+        List<EmailEntity> failedEmails = new ArrayList<>();
         for (EmailEntity email : emailRepository.findAllByIsHandledIsFalse()) {
             try {
                 UpdateAttachmentEntity updateAttachment = email.updateAttachment;
@@ -47,20 +49,21 @@ public class ConvertService {
                 addMetaData(document);
                 addPage(document, updateAttachment);
                 document.close();
-
+                correctEmails.add(email);
             } catch (Exception e) {
-                handleErrorsService.checkThatEmailHasErrorWhileSending(email);
+                failedEmails.add(email);
                 log.info("Error in converting to PDF.");
             }
         }
         if (sendingEmailsService.isEmailCreatedAndSendToClient(attachmentNames)) {
-            allNotHandledEmailsHasBeenSent();
+            allNotHandledEmailsHasBeenSent(correctEmails);
             log.info("Email with attachments has been sent.");
         }
+        handleErrorsService.checkThatEmailHasErrorWhileSending(failedEmails);
     }
 
-    private void allNotHandledEmailsHasBeenSent() {
-        for (EmailEntity email : emailRepository.findAllByIsHandledIsFalse()) {
+    private void allNotHandledEmailsHasBeenSent(List<EmailEntity> correctEmails) {
+        for (EmailEntity email : correctEmails) {
             email.setHandled(true);
             email.setSendingTime(LocalDateTime.now());
             emailRepository.save(email);

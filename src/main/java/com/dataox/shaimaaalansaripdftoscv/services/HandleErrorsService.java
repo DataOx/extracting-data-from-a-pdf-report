@@ -7,7 +7,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,10 +17,12 @@ public class HandleErrorsService {
     private final EmailRepository emailRepository;
     private final SendingEmailsService sendingEmailsService;
 
-    public void checkThatEmailHasErrorWhileSending(EmailEntity email) {
-        email.setHasSendingError(true);
-        email.setHandled(true);
-        emailRepository.save(email);
+    public void checkThatEmailHasErrorWhileSending(List<EmailEntity> emails) {
+        emails.forEach(email -> {
+            email.setHasSendingError(true);
+            email.setHandled(true);
+            emailRepository.save(email);
+        });
     }
 
     @Scheduled(cron = "${morning.scheduler}")
