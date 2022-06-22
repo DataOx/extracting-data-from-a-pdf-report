@@ -123,7 +123,7 @@ public class GraphConfig {
         final Properties properties = new Properties();
 
         try {
-            File file = ResourceUtils.getFile("classpath:oAuth.properties");
+            File file = ResourceUtils.getFile("config/oAuth.properties");
             properties.load(Files.newInputStream(file.toPath()));
 
             return properties;

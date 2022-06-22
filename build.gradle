@@ -5,8 +5,7 @@ plugins {
 }
 
 group = 'com.dataox'
-version = '0.0.1-SNAPSHOT'
-sourceCompatibility = "1.9"
+version = '0.1'
 
 repositories {
     mavenCentral()
@@ -16,7 +15,6 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'com.google.guava:guava:31.1-jre'
     implementation 'com.azure:azure-identity:1.5.2'
     implementation 'com.microsoft.graph:microsoft-graph:5.26.0'
@@ -28,12 +26,4 @@ dependencies {
     runtimeOnly 'com.h2database:h2'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
-    testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
-
-tasks.named('test') {
-    useJUnitPlatform()
-}
-
-targetCompatibility = JavaVersion.VERSION_1_9
