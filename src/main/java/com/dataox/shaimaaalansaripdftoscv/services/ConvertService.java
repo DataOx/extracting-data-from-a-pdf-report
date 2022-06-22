@@ -51,7 +51,7 @@ public class ConvertService {
                 docOutput.close();
             } catch (Exception e) {
                 failedEmails.add(email);
-                log.info("Error in converting to PDF.");
+                log.info("Error in converting to PDF: " + e);
             }
         }
 

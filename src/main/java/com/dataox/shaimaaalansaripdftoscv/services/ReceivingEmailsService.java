@@ -34,7 +34,7 @@ public class ReceivingEmailsService {
                 log.info("Update email with id " + newEmail.id + " in BD with new attachments.");
             }
         } catch (Exception e) {
-            log.info("Can't received email or save it.");
+            log.info("Can't received email or save it: " + e);
         }
     }
 
