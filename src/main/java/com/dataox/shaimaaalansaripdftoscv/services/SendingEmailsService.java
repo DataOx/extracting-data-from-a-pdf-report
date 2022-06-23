@@ -4,7 +4,6 @@ import com.dataox.shaimaaalansaripdftoscv.config.GraphConfig;
 import com.microsoft.graph.models.Attachment;
 import com.microsoft.graph.models.FileAttachment;
 import com.microsoft.graph.requests.AttachmentCollectionResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -15,10 +14,10 @@ import java.util.Map;
 
 @Log4j2
 @Service
-@RequiredArgsConstructor
 public class SendingEmailsService {
-    @Value("#{${recipient.email}}")
-    private List<String> recipientEmail;
+
+    @Value("${recipient.email}")
+    private List<String> recipientEmails;
 
     public boolean isEmailCreatedAndSendToClient(Map<String, byte[]> attachments) {
         try {
@@ -38,7 +37,7 @@ public class SendingEmailsService {
             fileAttachments.add(getFileAttachment(entry));
         }
         attachment.value = fileAttachments;
-        GraphConfig.sendEmail("NP Report", createEmailsBody(), attachment, recipientEmail);
+        GraphConfig.sendEmail("NP Report", createEmailsBody(), attachment, recipientEmails);
     }
 
     private static FileAttachment getFileAttachment(Map.Entry<String, byte[]> entry) {
