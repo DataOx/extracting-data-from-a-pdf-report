@@ -54,7 +54,7 @@ public class GraphConfig {
         }
     }
 
-    public static void sendEmail(String subject, String body, AttachmentCollectionResponse attachment, String recipientsEmailAddress) throws Exception {
+    public static void sendEmail(String subject, String body, AttachmentCollectionResponse attachment, List<String> recipientsEmailAddress) throws Exception {
         if (_userClient == null) {
             throw new Exception("Graph has not been initialized for user auth.");
         }
@@ -67,10 +67,14 @@ public class GraphConfig {
         message.attachments = new AttachmentCollectionPage(attachment, null);
         message.hasAttachments = true;
 
-        final Recipient recipient = new Recipient();
-        recipient.emailAddress = new EmailAddress();
-        recipient.emailAddress.address = recipientsEmailAddress;
-        message.toRecipients = List.of(recipient);
+        List<Recipient> recipients = new ArrayList<>();
+        for (String recipientEmailAddress : recipientsEmailAddress) {
+            final Recipient recipient = new Recipient();
+            recipient.emailAddress = new EmailAddress();
+            recipient.emailAddress.address = recipientEmailAddress;
+            recipients.add(recipient);
+        }
+        message.toRecipients = recipients;
 
         _userClient.me()
                 .sendMail(UserSendMailParameterSet.newBuilder().withMessage(message).build())

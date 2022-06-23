@@ -17,8 +17,8 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class SendingEmailsService {
-    @Value("${recipient.email}")
-    private String recipientEmail;
+    @Value("#{${recipient.email}}")
+    private List<String> recipientEmail;
 
     public boolean isEmailCreatedAndSendToClient(Map<String, byte[]> attachments) {
         try {
@@ -41,7 +41,7 @@ public class SendingEmailsService {
         GraphConfig.sendEmail("NP Report", createEmailsBody(), attachment, recipientEmail);
     }
 
-    private static FileAttachment getFileAttachment(Map.Entry<String, byte[]> entry) throws Exception {
+    private static FileAttachment getFileAttachment(Map.Entry<String, byte[]> entry) {
         FileAttachment fileAttachment = new FileAttachment();
         fileAttachment.name = entry.getKey();
         fileAttachment.contentBytes = entry.getValue();
