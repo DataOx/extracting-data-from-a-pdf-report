@@ -18,19 +18,48 @@ import org.springframework.util.ResourceUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static java.lang.String.format;
+import static java.nio.file.Files.writeString;
+import static java.nio.file.Path.of;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
+
 @Log4j2
 public class GraphConfig {
+
+    private final static String CONNECT_INFO_MSG_TEMPLATE =
+            "%s\nUrl: %s\nCode: %s\nExpires on: %s";
+
+    private final static Path CONNECT_INFO_PATH = of("connect_info.txt");
+
     private static GraphServiceClient<Request> _userClient;
 
     public static void initializeGraphAccount() throws Exception {
         try {
-            initializeGraphForUserAuth(getProperties(), challenge -> System.out.println(challenge.getMessage()));
+            initializeGraphForUserAuth(getProperties(), challenge -> {
+                try {
+                    writeString(
+                            CONNECT_INFO_PATH,
+                            format(
+                                    CONNECT_INFO_MSG_TEMPLATE,
+                                    challenge.getMessage(),
+                                    challenge.getVerificationUrl(),
+                                    challenge.getUserCode(),
+                                    challenge.getExpiresOn()
+                            ),
+                            CREATE, TRUNCATE_EXISTING);
+                    log.info("CONNECT INFO UPDATED. SEE connect_info.txt");
+                } catch (IOException e) {
+                    throw new RuntimeException("Connect info not handled");
+                }
+            });
         } catch (Exception e) {
             log.info("Error initializing Graph for user auth:");
             throw e;
@@ -105,7 +134,8 @@ public class GraphConfig {
                 .build();
 
         _userClient = GraphServiceClient.builder()
-                .authenticationProvider(authProvider).httpClient(client)
+                .authenticationProvider(authProvider)
+                .httpClient(client)
                 .buildClient();
     }
 
