@@ -55,9 +55,12 @@ public class ReceivingEmailsService {
         if (attachmentName.contains(") - ")) {
             return Objects.equals(attachment.contentType, "application/pdf") &&
                     !attachmentsNamesInDB.contains(attachmentName.substring(0, attachmentName.indexOf(") - "))) &&
-                    !attachmentsNamesInDB.contains(attachmentName);
+                    !attachmentsNamesInDB.contains(attachmentName) &&
+                    !attachmentName.contains("Extracted_");
         } else {
-            return Objects.equals(attachment.contentType, "application/pdf") && !attachmentsNamesInDB.contains(attachmentName);
+            return Objects.equals(attachment.contentType, "application/pdf") &&
+                    !attachmentsNamesInDB.contains(attachmentName) &&
+                    !attachmentName.contains("Extracted_");
         }
     }
 

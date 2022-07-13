@@ -33,7 +33,7 @@ public class ConvertService {
         for (EmailEntity email : emails) {
             try {
                 UpdateAttachmentEntity updateAttachment = email.updateAttachment;
-                String attachmentName = updateAttachment.name.substring(0, updateAttachment.name.length() - 4) + ".pdf";
+                String attachmentName = "Extracted_" + updateAttachment.name.substring(0, updateAttachment.name.length() - 4) + ".pdf";
 
                 Document document = new Document(PageSize.A4.rotate(), 18, 18, 10, 15);
 
