@@ -8,7 +8,7 @@ import java.util.List;
 
 @Repository
 public interface EmailRepository extends CrudRepository<EmailEntity, Long> {
-    List<EmailEntity> findAllByHandledIsFalse();
+    List<EmailEntity> findAllByHandledIsFalseAndUpdateAttachmentNotNull();
 
     List<EmailEntity> findAllByHasSendingErrorIsTrue();
 

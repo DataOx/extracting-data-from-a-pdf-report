@@ -4,7 +4,7 @@ import com.dataox.shaimaaalansaripdftoscv.domain.ConvertData;
 import com.dataox.shaimaaalansaripdftoscv.entities.EmailEntity;
 import com.dataox.shaimaaalansaripdftoscv.repositories.EmailRepository;
 import com.dataox.shaimaaalansaripdftoscv.services.ConvertService;
-import com.dataox.shaimaaalansaripdftoscv.services.ReceivingEmailsService;
+import com.dataox.shaimaaalansaripdftoscv.services.ReceivingFilesService;
 import com.dataox.shaimaaalansaripdftoscv.services.SendingEmailsService;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -21,7 +21,7 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 @AllArgsConstructor
 public class SchedulingConfig {
 
-    private final ReceivingEmailsService receivingEmailsService;
+    private final ReceivingFilesService receivingFilesService;
     private final SendingEmailsService sendingEmailsService;
     private final ConvertService convertService;
     private final EmailRepository emailRepository;
@@ -29,7 +29,7 @@ public class SchedulingConfig {
     @Scheduled(cron = "${morning.scheduler}")
     @Scheduled(cron = "${day.scheduler}")
     public void send() {
-        List<EmailEntity> emails = emailRepository.findAllByHandledIsFalse();
+        List<EmailEntity> emails = emailRepository.findAllByHandledIsFalseAndUpdateAttachmentNotNull();
 
         if (isEmpty(emails)) return;
 
@@ -85,8 +85,10 @@ public class SchedulingConfig {
         });
     }
 
-    @Scheduled(fixedRate = 100000, initialDelay = 10000)
-    public void receive() {
-        receivingEmailsService.receiveAttachmentsAndSaveInDB();
+    @Scheduled(fixedRate = 1000, initialDelay = 1000)
+    public void receive() throws Exception {
+        GraphConfig.getVerificationCode();
+        receivingFilesService.receiveAttachmentsAndSaveInDB();
     }
+
 }

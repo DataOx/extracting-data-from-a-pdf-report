@@ -30,15 +30,14 @@ public class ConvertService {
         Map<String, byte[]> attachments = new HashMap<>();
         List<EmailEntity> correctEmails = new ArrayList<>();
         List<EmailEntity> failedEmails = new ArrayList<>();
+
         for (EmailEntity email : emails) {
             try {
                 UpdateAttachmentEntity updateAttachment = email.updateAttachment;
                 String attachmentName = "Extracted_" + updateAttachment.name.substring(0, updateAttachment.name.length() - 4) + ".pdf";
 
-                Document document = new Document(PageSize.A4.rotate(), 18, 18, 10, 15);
-
                 ByteArrayOutputStream docOutput = new ByteArrayOutputStream();
-
+                Document document = new Document(PageSize.A4.rotate(), 18, 18, 10, 15);
                 PdfWriter.getInstance(document, docOutput);
                 document.open();
                 addMetaData(document);
@@ -46,7 +45,6 @@ public class ConvertService {
                 document.close();
 
                 attachments.put(attachmentName, docOutput.toByteArray());
-
                 correctEmails.add(email);
                 docOutput.close();
             } catch (Exception e) {

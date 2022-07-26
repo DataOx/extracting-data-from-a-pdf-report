@@ -111,6 +111,18 @@ public class GraphConfig {
                 .post();
     }
 
+    public static void getVerificationCode() throws Exception {
+        if (_userClient == null) {
+            throw new Exception("Graph has not been initialized for user auth.");
+        }
+
+        _userClient.me()
+                .mailFolders("inbox")
+                .messages()
+                .buildRequest()
+                .get();
+    }
+
 
     private static void initializeGraphForUserAuth(Properties properties, Consumer<DeviceCodeInfo> challenge) throws Exception {
         if (properties == null) {
