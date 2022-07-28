@@ -85,7 +85,7 @@ public class SchedulingConfig {
         });
     }
 
-    @Scheduled(fixedRate = 10000, initialDelay = 1000)
+    @Scheduled(fixedRate = 100000, initialDelay = 1000)
     public void receive() {
         receivingFilesService.receiveAttachmentsAndSaveInDB();
     }

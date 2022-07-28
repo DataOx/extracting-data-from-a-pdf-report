@@ -35,13 +35,14 @@ public class ReceivingFilesService {
             for (File file : files) {
                 LocalDateTime fileDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), TimeZone.getDefault().toZoneId());
 
+                log.info("file " + file.getName() + " check " + fileDate.isAfter(dateOfLastSavedEmail()) + " if " +  dateOfLastSavedEmail() + " is after " + fileDate);
                 if (fileDate.isAfter(dateOfLastSavedEmail())) {
                     if (!checkIfFileIsNecessary(file)) {
                         continue;
                     }
                     try {
                         EmailEntity newEmail = saveNewEmailInDBAndReturn(fileDate);
-                        updateEmailInDBWithMewAttachment(newEmail, file);
+                        parseAndUpdateEmailInDBWithMewAttachment(newEmail, file);
                         log.info("Update email with id " + newEmail.id + " in BD with new attachments.");
                     } catch (Exception e) {
                         log.info("Can't received file or save it: " + e);
@@ -50,16 +51,17 @@ public class ReceivingFilesService {
             }
         } catch (Exception e) {
             log.info("There are no useful documents in folder.");
+            log.info(e);
         }
     }
 
 
     private LocalDateTime dateOfLastSavedEmail() {
         try {
-            return (emailRepository.findTopByOrderByReceivingTimeDesc().receivingTime);
+            return emailRepository.findTopByOrderByReceivingTimeDesc().receivingTime.minusDays(1L);
         } catch (Exception e) {
             log.info("There are no files in DB, then we take files from 5 last days.");
-            return LocalDateTime.now().minusDays(35L);
+            return LocalDateTime.now().minusDays(5L);
         }
     }
 
@@ -94,7 +96,7 @@ public class ReceivingFilesService {
         return email;
     }
 
-    private void updateEmailInDBWithMewAttachment(EmailEntity email, File file) throws IOException {
+    private void parseAndUpdateEmailInDBWithMewAttachment(EmailEntity email, File file) throws IOException {
         parsingService.parsingToUpdateAttachmentFromPDFAndSave(file.getName(), Files.readAllBytes(file.toPath()));
         email.setUpdateAttachment(updateAttachmentRepository.findTopByOrderByIdDesc());
         emailRepository.save(email);
