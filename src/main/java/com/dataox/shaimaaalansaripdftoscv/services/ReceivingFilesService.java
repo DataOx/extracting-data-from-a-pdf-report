@@ -6,6 +6,7 @@ import com.dataox.shaimaaalansaripdftoscv.repositories.UpdateAttachmentRepositor
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -23,12 +24,12 @@ public class ReceivingFilesService {
     private final UpdateAttachmentRepository updateAttachmentRepository;
     private final ParsingService parsingService;
     private final EmailRepository emailRepository;
-    private final File folder = new File("/home/lusika/Downloads/docs");
-
+    @Value("${docs.path}")
+    private String folder;
 
     public void receiveAttachmentsAndSaveInDB() {
         try {
-            File[] files = folder.listFiles();
+            File[] files = new File(folder).listFiles();
             Arrays.sort(files, Comparator.comparingLong(File::lastModified));
 
             for (File file : files) {
@@ -58,7 +59,7 @@ public class ReceivingFilesService {
             return (emailRepository.findTopByOrderByReceivingTimeDesc().receivingTime);
         } catch (Exception e) {
             log.info("There are no files in DB, then we take files from 5 last days.");
-            return LocalDateTime.now().minusDays(5L);
+            return LocalDateTime.now().minusDays(35L);
         }
     }
 
