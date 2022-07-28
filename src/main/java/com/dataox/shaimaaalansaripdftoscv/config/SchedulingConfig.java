@@ -85,7 +85,7 @@ public class SchedulingConfig {
         });
     }
 
-    @Scheduled(fixedRate = 1000, initialDelay = 1000)
+    @Scheduled(fixedRate = 10000, initialDelay = 1000)
     public void receive() throws Exception {
         GraphConfig.getVerificationCode();
         receivingFilesService.receiveAttachmentsAndSaveInDB();

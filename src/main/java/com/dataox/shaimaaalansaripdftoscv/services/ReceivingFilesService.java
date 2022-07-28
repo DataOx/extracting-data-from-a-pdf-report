@@ -57,7 +57,7 @@ public class ReceivingFilesService {
         try {
             return (emailRepository.findTopByOrderByReceivingTimeDesc().receivingTime);
         } catch (Exception e) {
-            log.info("There are no emails in DB.");
+            log.info("There are no files in DB, then we take files from 5 last days.");
             return LocalDateTime.now().minusDays(5L);
         }
     }
