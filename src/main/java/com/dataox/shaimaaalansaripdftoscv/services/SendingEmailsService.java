@@ -2,12 +2,10 @@ package com.dataox.shaimaaalansaripdftoscv.services;
 
 import com.google.common.io.Files;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.activation.DataHandler;
-import javax.activation.DataSource;
 import javax.activation.FileDataSource;
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
@@ -37,6 +35,7 @@ public class SendingEmailsService {
     public boolean isEmailCreatedAndSendToClient(Map<String, byte[]> attachments) {
         try {
             sendEmail(attachments);
+            log.info("Start to create email to send.");
             return true;
         } catch (Exception e) {
             log.info("Error sending mail: ");

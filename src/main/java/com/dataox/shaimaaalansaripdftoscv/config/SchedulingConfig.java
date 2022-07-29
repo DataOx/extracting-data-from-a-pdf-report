@@ -29,13 +29,17 @@ public class SchedulingConfig {
     @Scheduled(cron = "${morning.scheduler}")
     @Scheduled(cron = "${day.scheduler}")
     public void send() {
+        log.info("Start to create PDFs.");
         List<EmailEntity> emails = emailRepository.findAllByHandledIsFalseAndUpdateAttachmentNotNull();
 
-        if (isEmpty(emails)) return;
+        if (isEmpty(emails)) {
+            log.info("No emails.");
+            return;
+        }
 
         ConvertData data = convertService.createPdfFiles(emails);
-
         if (!isEmpty(data.getAttachments())) {
+            log.info("Start to send email.");
             if (sendingEmailsService.isEmailCreatedAndSendToClient(data.getAttachments())) {
                 allNotHandledEmailsHasBeenSent(data.getCorrectEmails());
                 log.info("Email with attachments has been sent.");

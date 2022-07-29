@@ -26,16 +26,20 @@ public class ReceivingFilesService {
     private final EmailRepository emailRepository;
     @Value("${docs.path}")
     private String folder;
+    @Value("${docs.checkDate}")
+    private String checkDate;
 
     public void receiveAttachmentsAndSaveInDB() {
         try {
             File[] files = new File(folder).listFiles();
+            log.info("folder path: " + folder);
             Arrays.sort(files, Comparator.comparingLong(File::lastModified));
 
             for (File file : files) {
+                log.info("file name: " + file.getName());
                 LocalDateTime fileDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), TimeZone.getDefault().toZoneId());
 
-                log.info("file " + file.getName() + " check " + fileDate.isAfter(dateOfLastSavedEmail()) + " if " +  dateOfLastSavedEmail() + " is after " + fileDate);
+//                log.info("file " + file.getName() + " check " + fileDate.isAfter(dateOfLastSavedEmail()) + " if " + fileDate + " is after " + dateOfLastSavedEmail());
                 if (fileDate.isAfter(dateOfLastSavedEmail())) {
                     if (!checkIfFileIsNecessary(file)) {
                         continue;
@@ -60,8 +64,8 @@ public class ReceivingFilesService {
         try {
             return emailRepository.findTopByOrderByReceivingTimeDesc().receivingTime.minusDays(1L);
         } catch (Exception e) {
-            log.info("There are no files in DB, then we take files from 5 last days.");
-            return LocalDateTime.now().minusDays(5L);
+            log.info("There are no files in DB, then we take files from " + checkDate + " last days.");
+            return LocalDateTime.now().minusDays(Long.parseLong(checkDate));
         }
     }
 
