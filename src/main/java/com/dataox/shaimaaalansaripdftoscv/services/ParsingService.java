@@ -28,17 +28,20 @@ import static org.apache.commons.lang3.StringUtils.substringAfter;
 public class ParsingService {
     private final UpdateAttachmentRepository updateAttachmentRepository;
 
-    public void parsingToUpdateAttachmentFromPDFAndSave(String fileAttachmentName, byte[] filePDF) {
+    public UpdateAttachmentEntity parsingToUpdateAttachmentFromPDFAndSave(String fileAttachmentName, byte[] filePDF) {
         PdfDocument attachmentInPDF = new PdfDocument(filePDF);
         PdfTableExtractor extractor = new PdfTableExtractor(attachmentInPDF);
-        UpdateAttachmentEntity updateAttachment;
+        UpdateAttachmentEntity updateAttachment = null;
 
         for (PdfTable table : extractor.extractTable(0)) {
             PdfPageCollection pdfPageCollection = attachmentInPDF.getPages();
             updateAttachment = createUpdateAttachment(table, pdfPageCollection.get(0));
-            updateAttachment.setName(fileAttachmentName);
-            saveUpdateAttachmentToDB(updateAttachment);
+            if (updateAttachment.getNonProductiveTime() != null && !updateAttachment.getNonProductiveTime().isEmpty()) {
+                updateAttachment.setName(fileAttachmentName);
+                saveUpdateAttachmentToDB(updateAttachment);
+            }
         }
+        return updateAttachment;
     }
 
 
@@ -63,7 +66,7 @@ public class ParsingService {
                         .substring(pdfPageBase.extractText(new Rectangle(470, 730, 120, 10)).indexOf("Java.") + 5).trim())
                 .date(parsingDateFromPDF(table))
                 .BITHydraulics(parsingAndSaveBITFromPDF(table, pdfPageBase))
-                .nonProductiveTime(parsingAndSaveNonProductiveTimeFromPDF(table))
+                .nonProductiveTime(!parsingAndSaveNonProductiveTimeFromPDF(table).isEmpty() ? parsingAndSaveNonProductiveTimeFromPDF(table) : null)
                 .build();
     }
 

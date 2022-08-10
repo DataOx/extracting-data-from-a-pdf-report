@@ -1,6 +1,7 @@
 package com.dataox.shaimaaalansaripdftoscv.services;
 
 import com.dataox.shaimaaalansaripdftoscv.entities.EmailEntity;
+import com.dataox.shaimaaalansaripdftoscv.entities.UpdateAttachmentEntity;
 import com.dataox.shaimaaalansaripdftoscv.repositories.EmailRepository;
 import com.dataox.shaimaaalansaripdftoscv.repositories.UpdateAttachmentRepository;
 import lombok.RequiredArgsConstructor;
@@ -101,9 +102,15 @@ public class ReceivingFilesService {
     }
 
     private void parseAndUpdateEmailInDBWithMewAttachment(EmailEntity email, File file) throws IOException {
-        parsingService.parsingToUpdateAttachmentFromPDFAndSave(file.getName(), Files.readAllBytes(file.toPath()));
-        email.setUpdateAttachment(updateAttachmentRepository.findTopByOrderByIdDesc());
-        emailRepository.save(email);
+        UpdateAttachmentEntity updateAttachment = parsingService.parsingToUpdateAttachmentFromPDFAndSave(file.getName(), Files.readAllBytes(file.toPath()));
+        if (updateAttachment.getNonProductiveTime() != null && !updateAttachment.getNonProductiveTime().isEmpty()) {
+            email.setUpdateAttachment(updateAttachment);
+            emailRepository.save(email);
+        }
+        else {
+            email.setHandled(true);
+            emailRepository.save(email);
+        }
     }
 
 }

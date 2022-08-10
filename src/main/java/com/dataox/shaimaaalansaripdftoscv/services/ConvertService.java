@@ -32,24 +32,26 @@ public class ConvertService {
         List<EmailEntity> failedEmails = new ArrayList<>();
 
         for (EmailEntity email : emails) {
-            try {
-                UpdateAttachmentEntity updateAttachment = email.updateAttachment;
-                String attachmentName = "Extracted_" + updateAttachment.name.substring(0, updateAttachment.name.length() - 4) + ".pdf";
+            if (!email.handled) {
+                try {
+                    UpdateAttachmentEntity updateAttachment = email.updateAttachment;
+                    String attachmentName = "Extracted_" + updateAttachment.name.substring(0, updateAttachment.name.length() - 4) + ".pdf";
 
-                ByteArrayOutputStream docOutput = new ByteArrayOutputStream();
-                Document document = new Document(PageSize.A4.rotate(), 18, 18, 10, 15);
-                PdfWriter.getInstance(document, docOutput);
-                document.open();
-                addMetaData(document);
-                addPage(document, updateAttachment);
-                document.close();
+                    ByteArrayOutputStream docOutput = new ByteArrayOutputStream();
+                    Document document = new Document(PageSize.A4.rotate(), 18, 18, 10, 15);
+                    PdfWriter.getInstance(document, docOutput);
+                    document.open();
+                    addMetaData(document);
+                    addPage(document, updateAttachment);
+                    document.close();
 
-                attachments.put(attachmentName, docOutput.toByteArray());
-                correctEmails.add(email);
-                docOutput.close();
-            } catch (Exception e) {
-                failedEmails.add(email);
-                log.info("Error in converting to PDF: " + e);
+                    attachments.put(attachmentName, docOutput.toByteArray());
+                    correctEmails.add(email);
+                    docOutput.close();
+                } catch (Exception e) {
+                    failedEmails.add(email);
+                    log.info("Error in converting to PDF: " + e);
+                }
             }
         }
 

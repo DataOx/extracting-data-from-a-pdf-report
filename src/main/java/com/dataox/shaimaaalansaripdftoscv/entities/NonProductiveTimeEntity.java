@@ -20,6 +20,8 @@ public class NonProductiveTimeEntity {
     @Column(name = "id")
     public Long id;
     public BigDecimal hours;
+    @Lob
+    @Column(length = 100000)
     public String operationalDistribution;
 
 }
