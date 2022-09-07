@@ -47,7 +47,6 @@ public class ParsingService {
 
     private void saveUpdateAttachmentToDB(UpdateAttachmentEntity attachment) {
         updateAttachmentRepository.save(attachment);
-        log.info("Attachment with id " + attachment.id + " saved in DB.");
     }
 
     private UpdateAttachmentEntity createUpdateAttachment(PdfTable table, PdfPageBase pdfPageBase) {

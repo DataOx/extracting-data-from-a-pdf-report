@@ -14,7 +14,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,21 +39,16 @@ public class ReceivingFilesService {
             Arrays.sort(files, Comparator.comparingLong(File::lastModified));
 
             for (File file : files) {
-                log.info("file name: " + file.getName());
                 LocalDateTime fileDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), TimeZone.getDefault().toZoneId());
-
-//                log.info("file " + file.getName() + " check " + fileDate.isAfter(dateOfLastSavedEmail()) + " if " + fileDate + " is after " + dateOfLastSavedEmail());
-                if (fileDate.isAfter(dateOfLastSavedEmail())) {
-                    if (!checkIfFileIsNecessary(file)) {
-                        continue;
-                    }
-                    try {
-                        EmailEntity newEmail = saveNewEmailInDBAndReturn(fileDate);
-                        parseAndUpdateEmailInDBWithMewAttachment(newEmail, file);
-                        log.info("Update email with id " + newEmail.id + " in BD with new attachments.");
-                    } catch (Exception e) {
-                        log.info("Can't received file or save it: " + e);
-                    }
+                if (!checkIfFileIsNecessary(file)) {
+                    continue;
+                }
+                log.info("file name: " + file.getName());
+                try {
+                    EmailEntity newEmail = saveNewEmailInDBAndReturn(fileDate);
+                    parseAndUpdateEmailInDBWithMewAttachment(newEmail, file);
+                } catch (Exception e) {
+                    log.info("Can't received file or save it: " + e);
                 }
             }
         } catch (Exception e) {
@@ -61,33 +58,25 @@ public class ReceivingFilesService {
     }
 
 
-    private LocalDateTime dateOfLastSavedEmail() {
-        try {
-            return emailRepository.findTopByOrderByReceivingTimeDesc().receivingTime.minusDays(1L);
-        } catch (Exception e) {
-            log.info("There are no files in DB, then we take files from " + checkDate + " last days.");
-            return LocalDateTime.now().minusDays(Long.parseLong(checkDate));
-        }
-    }
-
     private boolean checkIfFileIsNecessary(File file) {
-        List<String> attachmentsNamesInDB = findAttachmentsNamesInDB();
         String fileName = file.getName();
+        if (!Objects.equals(FilenameUtils.getExtension(fileName), "PDF"))
+            return false;
+        List<String> attachmentsNamesInDB = findAttachmentsNamesInDB();
+        String dateToday = LocalDate.now().format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
 
-        if (fileName.contains(") - ")) {
-            return Objects.equals(FilenameUtils.getExtension(fileName), "PDF") &&
-                    !attachmentsNamesInDB.contains(fileName.substring(0, fileName.indexOf(") - "))) &&
-                    !attachmentsNamesInDB.contains(fileName) &&
-                    !fileName.contains("Extracted_");
-        } else {
-            return Objects.equals(FilenameUtils.getExtension(fileName), "PDF") &&
-                    !attachmentsNamesInDB.contains(fileName) &&
-                    !fileName.contains("Extracted_");
-        }
+        fileName = fileName.substring(0, fileName.indexOf(".PDF"));
+        if (!fileName.contains("Extracted_") && fileName.contains(dateToday) && !attachmentsNamesInDB.contains(fileName)) {
+            if (fileName.contains(")-") || fileName.contains(") -")) {
+                String finalFileName = fileName;
+                return attachmentsNamesInDB.stream().noneMatch(x -> x.contains((finalFileName.substring(0, finalFileName.indexOf(")") + 1))));
+            } else
+                return true;
+        } else return false;
     }
 
     private List<String> findAttachmentsNamesInDB() {
-        return updateAttachmentRepository.findAllByOrderByIdAsc().stream().map(x -> x.name).collect(Collectors.toList());
+        return updateAttachmentRepository.findAllByOrderByIdAsc().stream().map(x -> x.name.substring(0, x.name.indexOf(".PDF"))).collect(Collectors.toList());
     }
 
     private EmailEntity saveNewEmailInDBAndReturn(LocalDateTime emailReceivingTime) {
@@ -95,9 +84,7 @@ public class ReceivingFilesService {
                 .receivingTime(emailReceivingTime)
                 .sendingTime(null)
                 .build();
-
         emailRepository.save(email);
-        log.info("Create new email with id " + email.id + " in BD.");
         return email;
     }
 
@@ -106,8 +93,7 @@ public class ReceivingFilesService {
         if (updateAttachment.getNonProductiveTime() != null && !updateAttachment.getNonProductiveTime().isEmpty()) {
             email.setUpdateAttachment(updateAttachment);
             emailRepository.save(email);
-        }
-        else {
+        } else {
             email.setHandled(true);
             emailRepository.save(email);
         }

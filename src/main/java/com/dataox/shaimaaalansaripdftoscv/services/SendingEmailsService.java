@@ -35,7 +35,6 @@ public class SendingEmailsService {
     public boolean isEmailCreatedAndSendToClient(Map<String, byte[]> attachments) {
         try {
             sendEmail(attachments);
-            log.info("Start to create email to send.");
             return true;
         } catch (Exception e) {
             log.info("Error sending mail: ");
@@ -57,8 +56,8 @@ public class SendingEmailsService {
             multipart.addBodyPart(messageBodyPart);
 
             for (String key : files.keySet()) {
-                messageBodyPart = new MimeBodyPart();
                 Files.write(files.get(key), new File("./" + key));
+                messageBodyPart = new MimeBodyPart();
                 messageBodyPart.setDataHandler(new DataHandler(new FileDataSource("./" + key)));
                 messageBodyPart.setFileName(key);
                 multipart.addBodyPart(messageBodyPart);

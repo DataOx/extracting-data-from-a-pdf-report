@@ -31,22 +31,19 @@ public class SchedulingConfig {
     public void send() {
         log.info("Start to create PDFs.");
         List<EmailEntity> emails = emailRepository.findAllByHandledIsFalseAndUpdateAttachmentNotNull();
-
         if (isEmpty(emails)) {
             log.info("No emails.");
             return;
         }
-
         ConvertData data = convertService.createPdfFiles(emails);
+
         if (!isEmpty(data.getAttachments())) {
             log.info("Start to send email.");
-            if (sendingEmailsService.isEmailCreatedAndSendToClient(data.getAttachments())) {
+            if (sendingEmailsService.isEmailCreatedAndSendToClient(data.getAttachments()))
                 allNotHandledEmailsHasBeenSent(data.getCorrectEmails());
-                log.info("Email with attachments has been sent.");
-            }
+            else
+                checkThatEmailHasErrorWhileSending(data.getFailedEmails());
         }
-
-        checkThatEmailHasErrorWhileSending(data.getFailedEmails());
     }
 
     private void checkThatEmailHasErrorWhileSending(List<EmailEntity> emails) {
@@ -67,13 +64,15 @@ public class SchedulingConfig {
         }
     }
 
-    @Scheduled(cron = "${morning.scheduler}")
-    @Scheduled(cron = "${day.scheduler}")
+    //    @Scheduled(cron = "${morning.scheduler}")
+    //    @Scheduled(cron = "${day.scheduler}")
     public void resend() {
+        log.info("Start to resend emails.");
         List<EmailEntity> emails = emailRepository.findAllByHasSendingErrorIsTrue();
-
-        if (isEmpty(emails)) return;
-
+        if (isEmpty(emails)) {
+            log.info("No emails.");
+            return;
+        }
         ConvertData data = convertService.createPdfFiles(emails);
 
         if (!isEmpty(data.getAttachments())) {
