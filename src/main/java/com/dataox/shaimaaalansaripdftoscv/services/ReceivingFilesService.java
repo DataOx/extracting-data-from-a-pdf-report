@@ -62,16 +62,16 @@ public class ReceivingFilesService {
         String fileName = file.getName();
         if (!Objects.equals(FilenameUtils.getExtension(fileName), "PDF"))
             return false;
-        List<String> attachmentsNamesInDB = findAttachmentsNamesInDB();
-        String dateToday = LocalDate.now().format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
 
+        List<String> attachmentsInDB = findAttachmentsNamesInDB();
+        String dateToday = LocalDate.now().format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
         fileName = fileName.substring(0, fileName.indexOf(".PDF"));
-        if (!fileName.contains("Extracted_") && fileName.contains(dateToday) && !attachmentsNamesInDB.contains(fileName)) {
-            if (fileName.contains(")-") || fileName.contains(") -")) {
-                String finalFileName = fileName;
-                return attachmentsNamesInDB.stream().noneMatch(x -> x.contains((finalFileName.substring(0, finalFileName.indexOf(")") + 1))));
-            } else
-                return true;
+        if (!fileName.contains("Extracted_") && fileName.contains(dateToday) && !attachmentsInDB.contains(fileName)) {
+            if (fileName.indexOf(")") + 1 != fileName.length()) {
+                fileName = fileName.substring(0, fileName.indexOf(")") + 1);
+            }
+            String finalFileName1 = fileName;
+            return attachmentsInDB.stream().filter(x -> x.substring(0, x.indexOf(")")+1).contains(finalFileName1)).findAny().isEmpty();
         } else return false;
     }
 
