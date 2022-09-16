@@ -32,14 +32,12 @@ public class SendingEmailsService {
     final String date = LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
 
 
-    public boolean isEmailCreatedAndSendToClient(Map<String, byte[]> attachments) {
+    public void createEmailAndSendToClient(Map<String, byte[]> attachments) {
         try {
             sendEmail(attachments);
-            return true;
         } catch (Exception e) {
             log.info("Error sending mail: ");
             log.info(e.getMessage());
-            return false;
         }
     }
 

@@ -12,6 +12,4 @@ public interface EmailRepository extends CrudRepository<EmailEntity, Long> {
 
     List<EmailEntity> findAllByHasSendingErrorIsTrue();
 
-    EmailEntity findTopByOrderByReceivingTimeDesc();
-
 }

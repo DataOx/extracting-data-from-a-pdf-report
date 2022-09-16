@@ -11,8 +11,11 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.springframework.util.CollectionUtils.isEmpty;
 
@@ -35,14 +38,14 @@ public class SchedulingConfig {
             log.info("No emails.");
             return;
         }
+
+        String dateToday = LocalDate.now().format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
+        emails = emails.stream().filter(email -> email.getUpdateAttachment().getName().contains(dateToday)).collect(Collectors.toList());
         ConvertData data = convertService.createPdfFiles(emails);
 
         if (!isEmpty(data.getAttachments())) {
+            sendingEmailsService.createEmailAndSendToClient(data.getAttachments());
             log.info("Start to send email.");
-            if (sendingEmailsService.isEmailCreatedAndSendToClient(data.getAttachments()))
-                allNotHandledEmailsHasBeenSent(data.getCorrectEmails());
-            else
-                checkThatEmailHasErrorWhileSending(data.getFailedEmails());
         }
     }
 
@@ -76,10 +79,8 @@ public class SchedulingConfig {
         ConvertData data = convertService.createPdfFiles(emails);
 
         if (!isEmpty(data.getAttachments())) {
-            if (sendingEmailsService.isEmailCreatedAndSendToClient(data.getAttachments())) {
-                allNotHandledEmailsHasBeenSent(data.getCorrectEmails());
-                log.info("Email with attachments has been sent.");
-            }
+            sendingEmailsService.createEmailAndSendToClient(data.getAttachments());
+            log.info("Email with attachments has been sent.");
         }
 
         data.getFailedEmails().forEach(e -> {

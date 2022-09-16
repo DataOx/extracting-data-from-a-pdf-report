@@ -5,12 +5,14 @@ import com.dataox.shaimaaalansaripdftoscv.entities.BITHydraulicsEntity;
 import com.dataox.shaimaaalansaripdftoscv.entities.EmailEntity;
 import com.dataox.shaimaaalansaripdftoscv.entities.NonProductiveTimeEntity;
 import com.dataox.shaimaaalansaripdftoscv.entities.UpdateAttachmentEntity;
+import com.dataox.shaimaaalansaripdftoscv.repositories.EmailRepository;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,10 +28,17 @@ public class ConvertService {
     private static final Font smallText = new Font(Font.FontFamily.TIMES_ROMAN, 12, Font.NORMAL);
     private static final Font smallTables = new Font(Font.FontFamily.TIMES_ROMAN, 10, Font.NORMAL);
 
+    private final EmailRepository emailRepository;
+
+    public ConvertService(EmailRepository emailRepository) {
+        this.emailRepository = emailRepository;
+    }
+
     public ConvertData createPdfFiles(List<EmailEntity> emails) {
         Map<String, byte[]> attachments = new HashMap<>();
         List<EmailEntity> correctEmails = new ArrayList<>();
         List<EmailEntity> failedEmails = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
 
         for (EmailEntity email : emails) {
             if (!email.handled) {
@@ -46,10 +55,15 @@ public class ConvertService {
                     document.close();
 
                     attachments.put(attachmentName, docOutput.toByteArray());
-                    correctEmails.add(email);
+                    email.setHandled(true);
+                    email.setHasSendingError(false);
+                    email.setSendingTime(now);
+                    emailRepository.save(email);
                     docOutput.close();
                 } catch (Exception e) {
-                    failedEmails.add(email);
+                    email.setHasSendingError(true);
+                    email.setHandled(true);
+                    emailRepository.save(email);
                     log.info("Error in converting to PDF: " + e);
                 }
             }
