@@ -22,14 +22,13 @@ import java.util.Properties;
 @Log4j2
 @Service
 public class SendingEmailsService {
-
     @Value("${email.recipient}")
     private String recipientEmails;
     @Value("${email.user}")
     private String username;
     @Value("${email.password}")
     private String password;
-    final String date = LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+    private final String date = LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
 
 
     public void createEmailAndSendToClient(Map<String, byte[]> attachments) {
@@ -80,6 +79,7 @@ public class SendingEmailsService {
         props.put("mail.smtp.ssl.protocols", "TLSv1.3");
 
         return Session.getInstance(props, new Authenticator() {
+            @Override
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(username, password);
             }

@@ -9,8 +9,7 @@ import com.spire.pdf.PdfPageBase;
 import com.spire.pdf.utilities.PdfTable;
 import com.spire.pdf.utilities.PdfTableExtractor;
 import com.spire.pdf.widget.PdfPageCollection;
-import lombok.AllArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
@@ -22,11 +21,11 @@ import java.util.List;
 
 import static org.apache.commons.lang3.StringUtils.substringAfter;
 
-@Log4j2
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class ParsingService {
     private final UpdateAttachmentRepository updateAttachmentRepository;
+
 
     public UpdateAttachmentEntity parsingToUpdateAttachmentFromPDFAndSave(String fileAttachmentName, byte[] filePDF) {
         PdfDocument attachmentInPDF = new PdfDocument(filePDF);
@@ -34,8 +33,8 @@ public class ParsingService {
         UpdateAttachmentEntity updateAttachment = null;
 
         for (PdfTable table : extractor.extractTable(0)) {
-            PdfPageCollection pdfPageCollection = attachmentInPDF.getPages();
-            updateAttachment = createUpdateAttachment(table, pdfPageCollection.get(0));
+            PdfPageCollection pageCollection = attachmentInPDF.getPages();
+            updateAttachment = createUpdateAttachment(table, pageCollection.get(0));
             if (updateAttachment.getNonProductiveTime() != null && !updateAttachment.getNonProductiveTime().isEmpty()) {
                 updateAttachment.setName(fileAttachmentName);
                 saveUpdateAttachmentToDB(updateAttachment);

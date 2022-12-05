@@ -8,6 +8,7 @@ import com.dataox.shaimaaalansaripdftoscv.entities.UpdateAttachmentEntity;
 import com.dataox.shaimaaalansaripdftoscv.repositories.EmailRepository;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
@@ -21,18 +22,14 @@ import java.util.Map;
 
 @Log4j2
 @Service
+@RequiredArgsConstructor
 public class ConvertService {
-
     private static final Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 19, Font.BOLD);
     private static final Font subFont = new Font(Font.FontFamily.TIMES_ROMAN, 16, Font.BOLD);
     private static final Font smallText = new Font(Font.FontFamily.TIMES_ROMAN, 12, Font.NORMAL);
     private static final Font smallTables = new Font(Font.FontFamily.TIMES_ROMAN, 10, Font.NORMAL);
-
     private final EmailRepository emailRepository;
 
-    public ConvertService(EmailRepository emailRepository) {
-        this.emailRepository = emailRepository;
-    }
 
     public ConvertData createPdfFiles(List<EmailEntity> emails) {
         Map<String, byte[]> attachments = new HashMap<>();
@@ -321,7 +318,7 @@ public class ConvertService {
         }
     }
 
-    class SolidLine implements LineDash {
+    static class SolidLine implements LineDash {
         public void applyLineDash(PdfContentByte canvas) {
         }
     }

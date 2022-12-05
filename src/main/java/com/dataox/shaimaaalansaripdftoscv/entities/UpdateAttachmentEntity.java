@@ -32,6 +32,8 @@ public class UpdateAttachmentEntity {
     public String presentActivity;
     public String formation;
     public LocalDate date;
+
+
     @OneToMany(cascade = {CascadeType.ALL})
     @JoinColumn(name = "update_attachment_id")
     public List<BITHydraulicsEntity> BITHydraulics;

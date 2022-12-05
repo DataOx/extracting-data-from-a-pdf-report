@@ -18,38 +18,31 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Log4j2
 @Service
 @RequiredArgsConstructor
 public class ReceivingFilesService {
-    private final UpdateAttachmentRepository updateAttachmentRepository;
     private final ParsingService parsingService;
+    private final UpdateAttachmentRepository updateAttachmentRepository;
     private final EmailRepository emailRepository;
     @Value("${docs.path}")
     private String folder;
     @Value("${docs.checkDate}")
     private String checkDate;
 
-    public void receiveAttachmentsAndSaveInDB() {
+
+    public void receiveAttachments() {
         try {
             File[] files = new File(folder).listFiles();
-            log.info("folder path: " + folder);
             Arrays.sort(files, Comparator.comparingLong(File::lastModified));
 
             for (File file : files) {
-                LocalDateTime fileDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), TimeZone.getDefault().toZoneId());
                 if (!checkIfFileIsNecessary(file)) {
                     continue;
                 }
-                log.info("file name: " + file.getName());
-                try {
-                    EmailEntity newEmail = saveNewEmailInDBAndReturn(fileDate);
-                    parseAndUpdateEmailInDBWithMewAttachment(newEmail, file);
-                } catch (Exception e) {
-                    log.info("Can't received file or save it: " + e);
-                }
+                log.info("Receive file with name: " + file.getName());
+                saveAttachmentInDB(file);
             }
         } catch (Exception e) {
             log.info("There are no useful documents in folder.");
@@ -57,6 +50,15 @@ public class ReceivingFilesService {
         }
     }
 
+    private void saveAttachmentInDB(File file) {
+        try {
+            LocalDateTime emailReceivingTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), TimeZone.getDefault().toZoneId());
+            EmailEntity newEmail = saveNewEmailInDBAndReturn(emailReceivingTime);
+            parseAndUpdateEmailInDBWithMewAttachment(newEmail, file);
+        } catch (Exception e) {
+            log.info("Can't received file or save it: " + e);
+        }
+    }
 
     private boolean checkIfFileIsNecessary(File file) {
         String fileName = file.getName();
@@ -71,12 +73,12 @@ public class ReceivingFilesService {
                 fileName = fileName.substring(0, fileName.indexOf(")") + 1);
             }
             String finalFileName1 = fileName;
-            return attachmentsInDB.stream().filter(x -> x.substring(0, x.indexOf(")")+1).contains(finalFileName1)).findAny().isEmpty();
+            return attachmentsInDB.stream().filter(x -> x.substring(0, x.indexOf(")") + 1).contains(finalFileName1)).findAny().isEmpty();
         } else return false;
     }
 
     private List<String> findAttachmentsNamesInDB() {
-        return updateAttachmentRepository.findAllByOrderByIdAsc().stream().map(x -> x.name.substring(0, x.name.indexOf(".PDF"))).collect(Collectors.toList());
+        return updateAttachmentRepository.findAllByOrderByIdAsc().stream().map(x -> x.name.substring(0, x.name.indexOf(".PDF"))).toList();
     }
 
     private EmailEntity saveNewEmailInDBAndReturn(LocalDateTime emailReceivingTime) {
@@ -90,13 +92,17 @@ public class ReceivingFilesService {
 
     private void parseAndUpdateEmailInDBWithMewAttachment(EmailEntity email, File file) throws IOException {
         UpdateAttachmentEntity updateAttachment = parsingService.parsingToUpdateAttachmentFromPDFAndSave(file.getName(), Files.readAllBytes(file.toPath()));
-        if (updateAttachment.getNonProductiveTime() != null && !updateAttachment.getNonProductiveTime().isEmpty()) {
+        if (checkIfIsAttachmentWithNPT(updateAttachment)) {
             email.setUpdateAttachment(updateAttachment);
             emailRepository.save(email);
         } else {
             email.setHandled(true);
             emailRepository.save(email);
         }
+    }
+
+    private boolean checkIfIsAttachmentWithNPT(UpdateAttachmentEntity updateAttachment) {
+        return updateAttachment.getNonProductiveTime() != null && !updateAttachment.getNonProductiveTime().isEmpty();
     }
 
 }
