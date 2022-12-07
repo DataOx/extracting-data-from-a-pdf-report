@@ -68,7 +68,7 @@ public class ReceivingFilesService {
         List<String> attachmentsInDB = findAttachmentsNamesInDB();
         String dateToday = LocalDate.now().format(DateTimeFormatter.ofPattern("MM-dd-yyyy"));
         fileName = fileName.substring(0, fileName.indexOf(".PDF"));
-        if (!fileName.contains("Extracted_") && fileName.contains(dateToday) && !attachmentsInDB.contains(fileName)) {
+        if (fileName.contains(dateToday) && !attachmentsInDB.contains(fileName)) {
             if (fileName.indexOf(")") + 1 != fileName.length()) {
                 fileName = fileName.substring(0, fileName.indexOf(")") + 1);
             }
@@ -92,17 +92,8 @@ public class ReceivingFilesService {
 
     private void parseAndUpdateEmailInDBWithMewAttachment(EmailEntity email, File file) throws IOException {
         UpdateAttachmentEntity updateAttachment = parsingService.parsingToUpdateAttachmentFromPDFAndSave(file.getName(), Files.readAllBytes(file.toPath()));
-        if (checkIfIsAttachmentWithNPT(updateAttachment)) {
-            email.setUpdateAttachment(updateAttachment);
-            emailRepository.save(email);
-        } else {
-            email.setHandled(true);
-            emailRepository.save(email);
-        }
-    }
-
-    private boolean checkIfIsAttachmentWithNPT(UpdateAttachmentEntity updateAttachment) {
-        return updateAttachment.getNonProductiveTime() != null && !updateAttachment.getNonProductiveTime().isEmpty();
+        email.setUpdateAttachment(updateAttachment);
+        emailRepository.save(email);
     }
 
 }

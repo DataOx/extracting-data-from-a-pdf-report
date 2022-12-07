@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDate;
-import java.util.List;
 
 @Data
 @Builder
@@ -21,24 +20,7 @@ public class UpdateAttachmentEntity {
     @Column(name = "id")
     public Long id;
     public String name;
-    public String wellNo;
-    public String tgTarget;
-    public String profile;
-    public String area;
-    public String team;
-    public String kocTeamLeader;
-    public String RIG;
-    public String drillingBHA;
-    public String presentActivity;
-    public String formation;
+    public String header;
     public LocalDate date;
-
-
-    @OneToMany(cascade = {CascadeType.ALL})
-    @JoinColumn(name = "update_attachment_id")
-    public List<BITHydraulicsEntity> BITHydraulics;
-    @OneToMany(cascade = {CascadeType.ALL})
-    @JoinColumn(name = "update_attachment_id")
-    public List<NonProductiveTimeEntity> nonProductiveTime;
 
 }

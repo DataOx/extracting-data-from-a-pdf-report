@@ -45,7 +45,7 @@ public class SendingEmailsService {
             Message message = new MimeMessage(startSession());
             message.setFrom(new InternetAddress(username));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipientEmails));
-            message.setSubject("NP Report_" + date);
+            message.setSubject("File" + date);
 
             BodyPart messageBodyPart = new MimeBodyPart();
             messageBodyPart.setText("");
